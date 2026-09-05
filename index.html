@@ -1257,13 +1257,11 @@ function loadAdminConfig(){
 
 function fillAdminConfigForm(){
   const cfg = loadAdminConfig();
-  const map = { 'gh-owner':'owner', 'gh-repo':'repo', 'gh-branch':'branch', 'gh-path':'path' };
+  const map = { 'gh-owner':'owner', 'gh-repo':'repo', 'gh-branch':'branch', 'gh-path':'path', 'gh-token':'token' };
   Object.keys(map).forEach(id => {
     const el = document.getElementById(id);
     if(el) el.value = cfg[map[id]] || el.value || (id === 'gh-branch' ? 'main' : id === 'gh-path' ? 'index.html' : '');
   });
-  /* 토큰은 화면에 남아있으면 스크린샷 등으로 노출될 수 있어 저장/자동 채움 없이,
-     배포할 때마다 매번 새로 입력하도록 합니다 */
 }
 
 function setAdminLog(message, type){
@@ -1540,9 +1538,10 @@ if(ghSaveBtn) ghSaveBtn.addEventListener('click', () => {
     repo:   document.getElementById('gh-repo').value.trim(),
     branch: document.getElementById('gh-branch').value.trim() || 'main',
     path:   document.getElementById('gh-path').value.trim() || 'index.html',
+    token:  document.getElementById('gh-token').value.trim(),
   };
   localStorage.setItem(ADMIN_CONFIG_KEY, JSON.stringify(cfg));
-  setAdminLog('이 브라우저에 저장했습니다. (토큰은 저장하지 않으므로 배포할 때마다 다시 입력해주세요)', 'success');
+  setAdminLog('이 브라우저에 저장했습니다. 다음부터는 토큰까지 자동으로 채워집니다.', 'success');
 });
 
 const ghClearBtn = document.getElementById('gh-clear-config');
