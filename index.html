@@ -511,7 +511,6 @@
     <div class="top-bar-left">
       <button type="button" id="logo-home" class="eyebrow eyebrow-btn" aria-label="맨 위로 이동">WORKSHOP LOG</button>
       <button type="button" class="eyebrow eyebrow-btn" data-show-view="creator" aria-label="제작자 정보 페이지로 이동">CREATOR INFO</button>
-      <button type="button" class="eyebrow eyebrow-btn" data-show-view="admin" aria-label="관리자 도구 페이지로 이동">ADMIN</button>
     </div>
     <button id="theme-toggle" class="theme-toggle" type="button" aria-label="화면 테마 전환">
       <svg class="sun-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -595,24 +594,13 @@
   <div id="admin-gate" class="admin-section" style="border-top:none; margin-top:0; padding-top:0;">
     <h1 class="creator-page-name" style="font-size:22px; margin-bottom:6px;">관리자 도구</h1>
     <p class="creator-page-role" style="margin-bottom:24px;">
-      이 화면은 비밀번호로 잠겨 있습니다. (비밀번호는 이 브라우저에만 저장되며,
-      파일이나 GitHub에는 저장되지 않습니다)
+      이 화면은 비밀번호로 잠겨 있습니다.
     </p>
 
-    <div id="admin-gate-setup">
-      <p class="admin-hint">처음 접속하셨네요. 앞으로 이 화면에 들어올 때 쓸 비밀번호를 정해주세요.</p>
-      <label class="admin-field"><span>새 비밀번호 (4자 이상)</span><input type="password" id="admin-setup-pass1"></label>
-      <label class="admin-field"><span>비밀번호 확인</span><input type="password" id="admin-setup-pass2"></label>
-      <div class="admin-actions">
-        <button type="button" id="admin-setup-btn" class="admin-btn admin-btn-primary">비밀번호 설정하고 들어가기</button>
-      </div>
-    </div>
-
-    <div id="admin-gate-unlock" hidden>
+    <div id="admin-gate-unlock">
       <label class="admin-field"><span>비밀번호</span><input type="password" id="admin-unlock-pass"></label>
       <div class="admin-actions">
         <button type="button" id="admin-unlock-btn" class="admin-btn admin-btn-primary">확인</button>
-        <button type="button" id="admin-reset-pass-btn" class="admin-btn admin-btn-ghost">비밀번호를 잊었어요 (초기화)</button>
       </div>
     </div>
 
@@ -1373,8 +1361,11 @@ function bindAdminProjectListEvents(){
   });
 }
 
-/* ---------- 비밀번호 잠금 (파일/GitHub에는 저장되지 않고, 이 브라우저에만 남습니다) ---------- */
-const ADMIN_PASS_HASH_KEY = 'admin-passcode-hash';
+/* ---------- 비밀번호 잠금 ----------
+   비밀번호 원문은 이 파일 어디에도 없습니다. 아래는 그 SHA-256 해시값만 저장해뒀고,
+   맞는 비밀번호를 입력했을 때만 통과됩니다. 비밀번호를 바꾸고 싶다면 새 비밀번호의
+   SHA-256 해시를 구해서 이 상수만 교체하면 됩니다. */
+const ADMIN_PASS_HASH = 'b4f9ffa70ae677cdc2be4ee64e612a239221bc99f3be6ddb45bce0ba5bb76af1';
 const ADMIN_UNLOCK_SESSION_KEY = 'admin-unlocked';
 
 async function sha256Hex(text){
@@ -1387,12 +1378,10 @@ function setAdminGateError(msg){
   if(el) el.textContent = msg || '';
 }
 
-/* 세션 잠금 해제 여부 / 비밀번호 설정 여부에 따라 게이트(잠금 화면) 또는 실제 관리자 화면을 보여줍니다 */
+/* 세션 잠금 해제 여부에 따라 게이트(잠금 화면) 또는 실제 관리자 화면을 보여줍니다 */
 function updateAdminGate(){
   const gate = document.getElementById('admin-gate');
   const body = document.getElementById('admin-body');
-  const setupBox = document.getElementById('admin-gate-setup');
-  const unlockBox = document.getElementById('admin-gate-unlock');
   if(!gate || !body) return;
 
   const unlocked = sessionStorage.getItem(ADMIN_UNLOCK_SESSION_KEY) === '1';
@@ -1408,9 +1397,6 @@ function updateAdminGate(){
   }
 
   setAdminGateError('');
-  const hasPass = !!localStorage.getItem(ADMIN_PASS_HASH_KEY);
-  setupBox.hidden = hasPass;
-  unlockBox.hidden = !hasPass;
 }
 
 /* ADMIN 화면에 들어올 때마다 잠금 상태를 확인합니다 (탭을 새로고침하면 다시 잠깁니다 — sessionStorage 기준) */
@@ -1518,22 +1504,11 @@ async function publishProjectsToGitHub(){
 bindAdminProjectListEvents();
 
 /* ---------- 비밀번호 게이트 버튼 ---------- */
-const adminSetupBtn = document.getElementById('admin-setup-btn');
-if(adminSetupBtn) adminSetupBtn.addEventListener('click', async () => {
-  const p1 = document.getElementById('admin-setup-pass1').value;
-  const p2 = document.getElementById('admin-setup-pass2').value;
-  if(p1.length < 4){ setAdminGateError('비밀번호는 4자 이상으로 정해주세요.'); return; }
-  if(p1 !== p2){ setAdminGateError('두 번 입력한 비밀번호가 서로 다릅니다.'); return; }
-  localStorage.setItem(ADMIN_PASS_HASH_KEY, await sha256Hex(p1));
-  sessionStorage.setItem(ADMIN_UNLOCK_SESSION_KEY, '1');
-  updateAdminGate();
-});
-
 const adminUnlockBtn = document.getElementById('admin-unlock-btn');
 if(adminUnlockBtn) adminUnlockBtn.addEventListener('click', async () => {
   const pass = document.getElementById('admin-unlock-pass').value;
   const hash = await sha256Hex(pass);
-  if(hash === localStorage.getItem(ADMIN_PASS_HASH_KEY)){
+  if(hash === ADMIN_PASS_HASH){
     sessionStorage.setItem(ADMIN_UNLOCK_SESSION_KEY, '1');
     document.getElementById('admin-unlock-pass').value = '';
     updateAdminGate();
@@ -1542,22 +1517,10 @@ if(adminUnlockBtn) adminUnlockBtn.addEventListener('click', async () => {
   }
 });
 
-const adminResetPassBtn = document.getElementById('admin-reset-pass-btn');
-if(adminResetPassBtn) adminResetPassBtn.addEventListener('click', () => {
-  if(!confirm('저장된 비밀번호를 지우고 새로 정할까요?')) return;
-  localStorage.removeItem(ADMIN_PASS_HASH_KEY);
-  updateAdminGate();
-});
-
 /* 비밀번호 입력칸에서 Enter로도 제출되게 합니다 */
-['admin-setup-pass2', 'admin-unlock-pass'].forEach(id => {
-  const el = document.getElementById(id);
-  if(!el) return;
-  el.addEventListener('keydown', e => {
-    if(e.key !== 'Enter') return;
-    const btn = document.getElementById(id === 'admin-setup-pass2' ? 'admin-setup-btn' : 'admin-unlock-btn');
-    if(btn) btn.click();
-  });
+const adminUnlockInput = document.getElementById('admin-unlock-pass');
+if(adminUnlockInput) adminUnlockInput.addEventListener('keydown', e => {
+  if(e.key === 'Enter' && adminUnlockBtn) adminUnlockBtn.click();
 });
 
 const adminAddBtn = document.getElementById('admin-add-project');
@@ -1692,6 +1655,16 @@ initSearch();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   });
+
+  /* ADMIN 화면은 메뉴에 버튼을 두지 않습니다 (일반 방문자 눈에 안 띄도록).
+     대신 주소 끝에 #admin을 직접 붙여서 들어갑니다.
+     예) https://12cchris.github.io/portfolio-site/#admin
+     (비밀번호로 한 번 더 잠겨 있으니, 이 주소를 알아도 안에서 편집/배포는 못 합니다) */
+  function checkAdminHash(){
+    if(location.hash.slice(1).toLowerCase() === 'admin') showView('admin');
+  }
+  checkAdminHash();
+  window.addEventListener('hashchange', checkAdminHash);
 })();
   </script>
 </body>
