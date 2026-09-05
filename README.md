@@ -1,5 +1,7 @@
 # Personal Workshop Log
 
+🔗 **사이트 바로가기: https://12cchris.github.io/portfolio-site/**
+
 필요해서 만든 개인 프로그램들을 한 페이지에 모아 보여주는 포트폴리오 사이트입니다.
 빌드 도구 없이 `index.html` 파일 하나로 동작하는 정적 사이트예요.
 
