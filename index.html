@@ -651,9 +651,10 @@
         <input type="password" id="gh-token" placeholder="ghp_... 또는 github_pat_..." autocomplete="off">
       </label>
       <div class="admin-actions">
-        <button type="button" id="gh-save-config" class="admin-btn admin-btn-ghost">이 브라우저에 저장</button>
+        <button type="button" id="gh-save-config" class="admin-btn admin-btn-ghost">지금 바로 저장</button>
         <button type="button" id="gh-clear-config" class="admin-btn admin-btn-ghost">저장된 정보 지우기</button>
       </div>
+      <p class="admin-hint" style="margin-top:8px; margin-bottom:0;">위 정보는 입력하는 즉시 자동으로 암호화되어 저장됩니다 (버튼은 안 눌러도 됩니다).</p>
     </section>
 
     <section class="admin-section">
@@ -1292,16 +1293,14 @@ async function fillAdminConfigForm(){
     if(el) el.value = cfg[map[id]] || el.value || (id === 'gh-branch' ? 'main' : id === 'gh-path' ? 'index.html' : '');
   });
 
-  /* 토큰은 평문으로 저장되지 않으므로, 현재 세션에 남아있는 비밀번호로
-     복호화를 시도해야만 자동으로 채워집니다 (새로고침 직후 등 비밀번호가
-     메모리에 없는 경우엔 비워두고, 다시 저장하도록 안내합니다) */
+  /* 토큰 입력칸에 이미 값이 있으면(방금 손으로 입력했거나 이전에 자동으로
+     채워진 경우) 그대로 둡니다 — 화면을 왔다 갔다 할 때마다 지워지면
+     "저장" 버튼을 누르기 전에 입력한 토큰이 계속 날아가서 불편하기 때문입니다.
+     칸이 비어있을 때만, 저장해둔 값이 있으면 복호화해서 채워 넣습니다. */
   const tokenEl = document.getElementById('gh-token');
-  if(tokenEl){
-    tokenEl.value = '';
-    if(cfg.tokenEnc && adminSessionPassword){
-      try{ tokenEl.value = await decryptWithPassword(cfg.tokenEnc, adminSessionPassword); }
-      catch(e){ setAdminLog('저장된 토큰을 불러오지 못했습니다. 다시 입력하고 저장해주세요.', 'error'); }
-    }
+  if(tokenEl && !tokenEl.value && cfg.tokenEnc && adminSessionPassword){
+    try{ tokenEl.value = await decryptWithPassword(cfg.tokenEnc, adminSessionPassword); }
+    catch(e){ setAdminLog('저장된 토큰을 불러오지 못했습니다. 다시 입력하고 저장해주세요.', 'error'); }
   }
 }
 
@@ -1663,12 +1662,9 @@ if(adminLogoutBtn) adminLogoutBtn.addEventListener('click', () => {
   updateAdminGate();
 });
 
-const ghSaveBtn = document.getElementById('gh-save-config');
-if(ghSaveBtn) ghSaveBtn.addEventListener('click', async () => {
-  if(!adminSessionPassword){
-    setAdminLog('세션 정보가 없어 토큰을 안전하게 저장할 수 없습니다. 잠금 화면에서 비밀번호를 다시 입력한 뒤 시도해주세요.', 'error');
-    return;
-  }
+/* 저장 로직을 함수로 분리해서, 버튼 클릭과 자동 저장(아래) 양쪽에서 재사용합니다 */
+async function saveGhConfig(){
+  if(!adminSessionPassword) return;
   const token = document.getElementById('gh-token').value.trim();
   const cfg = {
     owner:  document.getElementById('gh-owner').value.trim(),
@@ -1678,7 +1674,29 @@ if(ghSaveBtn) ghSaveBtn.addEventListener('click', async () => {
     tokenEnc: token ? await encryptWithPassword(token, adminSessionPassword) : null,
   };
   localStorage.setItem(ADMIN_CONFIG_KEY, JSON.stringify(cfg));
+}
+
+const ghSaveBtn = document.getElementById('gh-save-config');
+if(ghSaveBtn) ghSaveBtn.addEventListener('click', async () => {
+  if(!adminSessionPassword){
+    setAdminLog('세션 정보가 없어 토큰을 안전하게 저장할 수 없습니다. 잠금 화면에서 비밀번호를 다시 입력한 뒤 시도해주세요.', 'error');
+    return;
+  }
+  await saveGhConfig();
   setAdminLog('이 브라우저에 암호화하여 저장했습니다. 다음부터는 토큰까지 자동으로 채워집니다.', 'success');
+});
+
+/* GitHub 연결 정보(토큰 포함)를 입력하는 즉시 자동으로 암호화해서 저장합니다.
+   이제 "이 브라우저에 저장" 버튼을 따로 누르지 않아도, 한 번 입력해두면
+   화면 전환/새로고침/재잠금 이후에도 (같은 비밀번호로 잠금을 풀면) 그대로 남아있습니다. */
+let ghConfigSaveTimer = null;
+['gh-owner', 'gh-repo', 'gh-branch', 'gh-path', 'gh-token'].forEach(id => {
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.addEventListener('input', () => {
+    clearTimeout(ghConfigSaveTimer);
+    ghConfigSaveTimer = setTimeout(saveGhConfig, 600);
+  });
 });
 
 const ghClearBtn = document.getElementById('gh-clear-config');
