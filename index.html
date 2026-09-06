@@ -601,7 +601,7 @@
     </p>
 
     <div id="admin-gate-unlock">
-      <label class="admin-field"><span>비밀번호</span><input type="password" id="admin-unlock-pass"></label>
+      <label class="admin-field"><span>비밀번호</span><input type="password" id="admin-unlock-pass" autocomplete="off"></label>
       <div class="admin-actions">
         <button type="button" id="admin-unlock-btn" class="admin-btn admin-btn-primary">확인</button>
       </div>
@@ -611,10 +611,13 @@
   </div>
 
   <div class="page-admin-body" id="admin-body" hidden>
-    <h1 class="creator-page-name" style="font-size:22px; margin-bottom:6px;">관리자 도구</h1>
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
+      <h1 class="creator-page-name" style="font-size:22px; margin-bottom:6px;">관리자 도구</h1>
+      <button type="button" id="admin-logout-btn" class="admin-btn admin-btn-ghost" style="flex-shrink:0;">🔒 잠그기</button>
+    </div>
     <p class="creator-page-role" style="margin-bottom:28px;">
       아래 정보를 채우면, 프로젝트를 편집하고 <b>[GitHub에 저장하고 배포]</b> 버튼 한 번으로
-      바로 커밋됩니다. 몇십 초 후 실제 사이트에 반영됩니다.
+      바로 커밋됩니다. 몇십 초 후 실제 사이트에 반영됩니다. 자리를 비울 땐 위 <b>잠그기</b> 버튼을 눌러주세요.
     </p>
 
     <section class="admin-section">
@@ -645,7 +648,7 @@
       </div>
       <label class="admin-field">
         <span>Personal Access Token</span>
-        <input type="password" id="gh-token" placeholder="ghp_... 또는 github_pat_...">
+        <input type="password" id="gh-token" placeholder="ghp_... 또는 github_pat_..." autocomplete="off">
       </label>
       <div class="admin-actions">
         <button type="button" id="gh-save-config" class="admin-btn admin-btn-ghost">이 브라우저에 저장</button>
@@ -661,6 +664,10 @@
     </section>
 
     <section class="admin-section">
+      <label class="admin-field">
+        <span>커밋 메시지 (비워두면 기본 문구 사용)</span>
+        <input type="text" id="gh-commit-message" placeholder="포트폴리오 프로젝트 업데이트 (관리자 도구)">
+      </label>
       <button type="button" id="admin-publish" class="admin-btn admin-btn-primary">GitHub에 저장하고 배포</button>
       <p id="admin-log" class="admin-log" role="status" aria-live="polite"></p>
     </section>
@@ -1574,7 +1581,7 @@ async function publishProjectsToGitHub(){
       method: 'PUT',
       headers: { ...headers, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        message: '포트폴리오 프로젝트 업데이트 (관리자 도구)',
+        message: document.getElementById('gh-commit-message').value.trim() || '포트폴리오 프로젝트 업데이트 (관리자 도구)',
         content: utf8ToBase64(newContent),
         sha: fileData.sha,
         branch,
@@ -1643,6 +1650,17 @@ if(adminAddBtn) adminAddBtn.addEventListener('click', () => {
   const cards = document.querySelectorAll('#admin-project-list .admin-project-card');
   const last = cards[cards.length - 1];
   if(last) last.scrollIntoView({ behavior:'smooth', block:'center' });
+});
+
+/* 공용 컴퓨터 등에서 자리를 비울 때, 새로고침 없이 즉시 다시 잠그는 버튼입니다.
+   비밀번호는 메모리에서 지우고, 화면에 남아있던 토큰 입력값도 함께 지웁니다. */
+const adminLogoutBtn = document.getElementById('admin-logout-btn');
+if(adminLogoutBtn) adminLogoutBtn.addEventListener('click', () => {
+  adminUnlocked = false;
+  adminSessionPassword = null;
+  const tokenEl = document.getElementById('gh-token');
+  if(tokenEl) tokenEl.value = '';
+  updateAdminGate();
 });
 
 const ghSaveBtn = document.getElementById('gh-save-config');
