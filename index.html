@@ -16,7 +16,7 @@
 <meta property="og:type" content="website">
 <meta property="og:title" content="필요해서 만든 도구들 | Personal Workshop Log">
 <meta property="og:description" content="완성도보다 실제로 써먹는 것을 목표로 만든 개인 프로그램들의 개발 및 배포 기록입니다.">
-<meta property="og:url" content=""><!-- ✏️ 실제 배포 URL로 교체하세요 (예: https://yourname.github.io/portfolio) -->
+<meta property="og:url" content="https://12cchris.github.io/portfolio-site/">
 <meta property="og:image" content=""><!-- ✏️ SNS 공유용 썸네일 이미지 URL로 교체하세요 -->
 <meta name="theme-color" content="#FAFAF9" id="theme-color-meta">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230D9488'/%3E%3Cpath d='M30 55 L45 70 L72 35' stroke='white' stroke-width='9' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
@@ -247,7 +247,9 @@
   .admin-field input:focus,
   .admin-field select:focus,
   .admin-field textarea:focus{border-color:var(--accent);}
-  .admin-field textarea{resize:vertical; min-height:64px; line-height:1.5;}
+  .admin-field textarea{width:100%; resize:vertical; min-height:64px; line-height:1.5;}
+  /* 특징은 보통 여러 줄이라, 기본 칸을 좀 더 넉넉하게 잡아 스크롤 없이 다 보이게 합니다 */
+  .admin-field textarea[data-field="features"]{min-height:140px;}
   .admin-actions{display:flex; gap:10px; flex-wrap:wrap;}
   .admin-btn{
     font-family:inherit; font-size:13.5px; font-weight:700;
@@ -873,7 +875,11 @@ function sanitizeSvgElement(svgEl){
 async function fetchLucideIcon(name){
   if(remoteIconCache.has(name)) return remoteIconCache.get(name);
   try{
-    const res = await fetch(`https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/${encodeURIComponent(name)}.svg`);
+    /* @latest 대신 특정 버전을 고정해뒀습니다. lucide 쪽에서 나중에 breaking
+       change가 생겨도 이 사이트의 아이콘이 갑자기 깨지지 않습니다.
+       업데이트하고 싶다면 https://www.npmjs.com/package/lucide-static 에서
+       최신 버전을 확인해 아래 숫자만 바꿔주면 됩니다. */
+    const res = await fetch(`https://cdn.jsdelivr.net/npm/lucide-static@1.41.0/icons/${encodeURIComponent(name)}.svg`);
     if(!res.ok) throw new Error('icon not found');
     const text = await res.text();
     const doc = new DOMParser().parseFromString(text, 'image/svg+xml');
