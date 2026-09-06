@@ -855,6 +855,21 @@ const ICONS = {
 ============================================================ */
 const remoteIconCache = new Map(); // 아이콘 이름 → 불러온 SVG 내부 코드 (null = 실패)
 
+/* 외부(CDN)에서 받아온 SVG는 신뢰할 수 없는 입력으로 취급합니다.
+   <script> 태그, on클릭 같은 이벤트 핸들러 속성, javascript: 링크를
+   전부 제거한 뒤에만 화면에 삽입합니다. (CDN이 해킹당해 악성 코드가
+   섞여 들어와도 실행되지 않도록 막는 안전장치) */
+function sanitizeSvgElement(svgEl){
+  svgEl.querySelectorAll('script').forEach(el => el.remove());
+  [svgEl, ...svgEl.querySelectorAll('*')].forEach(el => {
+    Array.from(el.attributes).forEach(attr => {
+      const name = attr.name.toLowerCase();
+      const value = attr.value.trim().toLowerCase();
+      if(name.startsWith('on') || value.startsWith('javascript:')) el.removeAttribute(attr.name);
+    });
+  });
+}
+
 async function fetchLucideIcon(name){
   if(remoteIconCache.has(name)) return remoteIconCache.get(name);
   try{
@@ -864,6 +879,7 @@ async function fetchLucideIcon(name){
     const doc = new DOMParser().parseFromString(text, 'image/svg+xml');
     const svgEl = doc.querySelector('svg');
     if(!svgEl || doc.querySelector('parsererror')) throw new Error('parse error');
+    sanitizeSvgElement(svgEl);
     const inner = svgEl.innerHTML;
     remoteIconCache.set(name, inner);
     return inner;
@@ -1255,13 +1271,25 @@ function loadAdminConfig(){
   catch(e){ return {}; }
 }
 
-function fillAdminConfigForm(){
+async function fillAdminConfigForm(){
   const cfg = loadAdminConfig();
-  const map = { 'gh-owner':'owner', 'gh-repo':'repo', 'gh-branch':'branch', 'gh-path':'path', 'gh-token':'token' };
+  const map = { 'gh-owner':'owner', 'gh-repo':'repo', 'gh-branch':'branch', 'gh-path':'path' };
   Object.keys(map).forEach(id => {
     const el = document.getElementById(id);
     if(el) el.value = cfg[map[id]] || el.value || (id === 'gh-branch' ? 'main' : id === 'gh-path' ? 'index.html' : '');
   });
+
+  /* 토큰은 평문으로 저장되지 않으므로, 현재 세션에 남아있는 비밀번호로
+     복호화를 시도해야만 자동으로 채워집니다 (새로고침 직후 등 비밀번호가
+     메모리에 없는 경우엔 비워두고, 다시 저장하도록 안내합니다) */
+  const tokenEl = document.getElementById('gh-token');
+  if(tokenEl){
+    tokenEl.value = '';
+    if(cfg.tokenEnc && adminSessionPassword){
+      try{ tokenEl.value = await decryptWithPassword(cfg.tokenEnc, adminSessionPassword); }
+      catch(e){ setAdminLog('저장된 토큰을 불러오지 못했습니다. 다시 입력하고 저장해주세요.', 'error'); }
+    }
+  }
 }
 
 function setAdminLog(message, type){
@@ -1365,11 +1393,76 @@ function bindAdminProjectListEvents(){
    맞는 비밀번호를 입력했을 때만 통과됩니다. 비밀번호를 바꾸고 싶다면 새 비밀번호의
    SHA-256 해시를 구해서 이 상수만 교체하면 됩니다. */
 const ADMIN_PASS_HASH = 'b4f9ffa70ae677cdc2be4ee64e612a239221bc99f3be6ddb45bce0ba5bb76af1';
-const ADMIN_UNLOCK_SESSION_KEY = 'admin-unlocked';
+
+/* 잠금 해제 여부는 sessionStorage가 아니라 이 변수(메모리)로만 관리합니다.
+   페이지를 새로고침하면 항상 다시 잠기고, 비밀번호를 다시 입력해야 합니다.
+   (아래 토큰 암호화 기능이 비밀번호 원문을 필요로 하는데, 원문은 절대
+   어디에도 저장하지 않고 이 세션의 메모리에만 잠깐 들고 있기 때문입니다.) */
+let adminUnlocked = false;
+let adminSessionPassword = null;
 
 async function sha256Hex(text){
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/* ---------- 로그인 시도 제한 (무차별 대입 공격 방어) ----------
+   비밀번호를 5번 연속 틀리면 5분간 잠깁니다. localStorage에 기록해서
+   페이지를 새로고침해도 잠금이 풀리지 않게 합니다. */
+const LOGIN_ATTEMPTS_KEY = 'admin-login-attempts';
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCKOUT_MS = 5 * 60 * 1000;
+
+function getLoginAttempts(){
+  try{ return JSON.parse(localStorage.getItem(LOGIN_ATTEMPTS_KEY) || '{}'); }
+  catch(e){ return {}; }
+}
+function remainingLockoutMs(){
+  const { lockedUntil } = getLoginAttempts();
+  return lockedUntil ? Math.max(0, lockedUntil - Date.now()) : 0;
+}
+function recordFailedAttempt(){
+  const state = getLoginAttempts();
+  const count = (state.count || 0) + 1;
+  if(count >= MAX_LOGIN_ATTEMPTS){
+    localStorage.setItem(LOGIN_ATTEMPTS_KEY, JSON.stringify({ count: 0, lockedUntil: Date.now() + LOCKOUT_MS }));
+  } else {
+    localStorage.setItem(LOGIN_ATTEMPTS_KEY, JSON.stringify({ count }));
+  }
+}
+function clearLoginAttempts(){
+  localStorage.removeItem(LOGIN_ATTEMPTS_KEY);
+}
+
+/* ---------- GitHub 토큰 암호화 (비밀번호 기반) ----------
+   브라우저에 저장해두는 GitHub 토큰을, 관리자 비밀번호로부터 만든 키로
+   암호화해서 저장합니다(AES-GCM). 비밀번호 원문은 저장되지 않고, 이번
+   세션의 메모리(adminSessionPassword)에만 있다가 탭을 닫으면 사라집니다. */
+async function deriveKeyFromPassword(password, saltBytes){
+  const baseKey = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt: saltBytes, iterations: 150000, hash: 'SHA-256' },
+    baseKey,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt']
+  );
+}
+function bufToB64(buf){ return btoa(String.fromCharCode(...new Uint8Array(buf))); }
+function b64ToBuf(b64){ return Uint8Array.from(atob(b64), c => c.charCodeAt(0)); }
+
+async function encryptWithPassword(plainText, password){
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveKeyFromPassword(password, salt);
+  const cipherBuf = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(plainText));
+  return { c: bufToB64(cipherBuf), iv: bufToB64(iv), s: bufToB64(salt) };
+}
+async function decryptWithPassword(enc, password){
+  if(!enc || !enc.c) return '';
+  const key = await deriveKeyFromPassword(password, b64ToBuf(enc.s));
+  const plainBuf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64ToBuf(enc.iv) }, key, b64ToBuf(enc.c));
+  return new TextDecoder().decode(plainBuf);
 }
 
 function setAdminGateError(msg){
@@ -1378,18 +1471,18 @@ function setAdminGateError(msg){
 }
 
 /* 세션 잠금 해제 여부에 따라 게이트(잠금 화면) 또는 실제 관리자 화면을 보여줍니다 */
-function updateAdminGate(){
+async function updateAdminGate(){
   const gate = document.getElementById('admin-gate');
   const body = document.getElementById('admin-body');
   if(!gate || !body) return;
 
-  const unlocked = sessionStorage.getItem(ADMIN_UNLOCK_SESSION_KEY) === '1';
+  const unlocked = adminUnlocked;
   gate.hidden = unlocked;
   body.hidden = !unlocked;
 
   if(unlocked){
     if(!adminProjects) adminProjects = JSON.parse(JSON.stringify(PROJECTS));
-    fillAdminConfigForm();
+    await fillAdminConfigForm();
     renderAdminProjectList();
     setAdminLog('');
     return;
@@ -1398,7 +1491,7 @@ function updateAdminGate(){
   setAdminGateError('');
 }
 
-/* ADMIN 화면에 들어올 때마다 잠금 상태를 확인합니다 (탭을 새로고침하면 다시 잠깁니다 — sessionStorage 기준) */
+/* ADMIN 화면에 들어올 때마다 잠금 상태를 확인합니다 (탭을 새로고침하면 항상 다시 잠깁니다) */
 function initAdminView(){
   updateAdminGate();
 }
@@ -1505,14 +1598,29 @@ bindAdminProjectListEvents();
 /* ---------- 비밀번호 게이트 버튼 ---------- */
 const adminUnlockBtn = document.getElementById('admin-unlock-btn');
 if(adminUnlockBtn) adminUnlockBtn.addEventListener('click', async () => {
+  const lockedMs = remainingLockoutMs();
+  if(lockedMs > 0){
+    setAdminGateError(`시도 횟수를 초과했습니다. ${Math.ceil(lockedMs / 60000)}분 후 다시 시도해주세요.`);
+    return;
+  }
+
   const pass = document.getElementById('admin-unlock-pass').value;
   const hash = await sha256Hex(pass);
   if(hash === ADMIN_PASS_HASH){
-    sessionStorage.setItem(ADMIN_UNLOCK_SESSION_KEY, '1');
+    clearLoginAttempts();
+    adminUnlocked = true;
+    adminSessionPassword = pass;
     document.getElementById('admin-unlock-pass').value = '';
-    updateAdminGate();
+    await updateAdminGate();
   } else {
-    setAdminGateError('비밀번호가 올바르지 않습니다.');
+    recordFailedAttempt();
+    const nowLockedMs = remainingLockoutMs();
+    if(nowLockedMs > 0){
+      setAdminGateError(`시도 횟수를 초과했습니다. ${Math.ceil(nowLockedMs / 60000)}분 후 다시 시도해주세요.`);
+    } else {
+      const remaining = MAX_LOGIN_ATTEMPTS - (getLoginAttempts().count || 0);
+      setAdminGateError(`비밀번호가 올바르지 않습니다. (남은 시도 ${remaining}회)`);
+    }
   }
 });
 
@@ -1532,16 +1640,21 @@ if(adminAddBtn) adminAddBtn.addEventListener('click', () => {
 });
 
 const ghSaveBtn = document.getElementById('gh-save-config');
-if(ghSaveBtn) ghSaveBtn.addEventListener('click', () => {
+if(ghSaveBtn) ghSaveBtn.addEventListener('click', async () => {
+  if(!adminSessionPassword){
+    setAdminLog('세션 정보가 없어 토큰을 안전하게 저장할 수 없습니다. 잠금 화면에서 비밀번호를 다시 입력한 뒤 시도해주세요.', 'error');
+    return;
+  }
+  const token = document.getElementById('gh-token').value.trim();
   const cfg = {
     owner:  document.getElementById('gh-owner').value.trim(),
     repo:   document.getElementById('gh-repo').value.trim(),
     branch: document.getElementById('gh-branch').value.trim() || 'main',
     path:   document.getElementById('gh-path').value.trim() || 'index.html',
-    token:  document.getElementById('gh-token').value.trim(),
+    tokenEnc: token ? await encryptWithPassword(token, adminSessionPassword) : null,
   };
   localStorage.setItem(ADMIN_CONFIG_KEY, JSON.stringify(cfg));
-  setAdminLog('이 브라우저에 저장했습니다. 다음부터는 토큰까지 자동으로 채워집니다.', 'success');
+  setAdminLog('이 브라우저에 암호화하여 저장했습니다. 다음부터는 토큰까지 자동으로 채워집니다.', 'success');
 });
 
 const ghClearBtn = document.getElementById('gh-clear-config');
