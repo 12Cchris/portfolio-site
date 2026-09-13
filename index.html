@@ -481,6 +481,7 @@
   }
   .card-foot a{color:var(--accent); text-decoration:none; font-weight:700;}
   .card-foot a:hover{text-decoration:underline;}
+  .card-links{display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:flex-end;}
 
   /* ---------- Footer (시맨틱 구조 개선) ---------- */
   .site-footer{border-top:1px solid var(--border);}
@@ -735,6 +736,9 @@ const STATUS_CONFIG = {
                  그 아이콘 이름을 그대로 icon 필드에 적기만 하면 됩니다.
                  (SVG 코드를 직접 작성할 필요가 없습니다)
    link:    깃허브 등 링크. 없으면 "" 로 두면 됩니다.
+   link2:   두 번째 링크(선택). 없으면 "" 로 두면 됩니다.
+   link2Label: link2에 표시할 이름. 비워두면 link처럼 자동으로 라벨이 붙습니다.
+               (예: link2Label: "웹사이트")
    tags:    기술 스택 배열, 원하는 만큼 추가 가능
    features: 특징 목록, 원하는 만큼 추가 가능
    updatedAt: "YYYY-MM" 또는 "YYYY-MM-DD" 형식. 이 프로젝트를 마지막으로 손본 날짜.
@@ -1150,8 +1154,17 @@ function renderCard(p){
      아래 enhanceRemoteIcons()가 실제 아이콘으로 채워 넣도록 표시해둡니다 */
   const iconViewBox = knownIcon ? '0 0 22 22' : '0 0 24 24';
   const remoteAttr = knownIcon ? '' : ` data-remote-icon="${escapeHtml(p.icon || '')}"`;
-  const linkHtml = p.link
+  /* 링크는 최대 2개까지 지원합니다. 두 번째 링크(link2)는 라벨(link2Label)을
+     직접 입력할 수 있고, 비워두면 첫 번째 링크처럼 자동으로 라벨이 붙습니다. */
+  const link1Html = p.link
     ? `<a href="${safeUrl(p.link)}" target="_blank" rel="noopener noreferrer" aria-label="${escapeHtml(p.title)} 관련 링크 열기 (새 창)">${getLinkLabel(p.link)}</a>`
+    : '';
+  const link2Label = (p.link2Label || '').trim() || getLinkLabel(p.link2 || '');
+  const link2Html = p.link2
+    ? `<a href="${safeUrl(p.link2)}" target="_blank" rel="noopener noreferrer" aria-label="${escapeHtml(p.title)} 관련 링크 2 열기 (새 창)">${escapeHtml(link2Label)}</a>`
+    : '';
+  const linkHtml = (link1Html || link2Html)
+    ? `<span class="card-links">${link1Html}${link2Html}</span>`
     : `<span>${escapeHtml(getNoLinkLabel(p.status))}</span>`;
 
   return `
@@ -1313,7 +1326,7 @@ function setAdminLog(message, type){
 }
 
 function emptyAdminProject(){
-  return { status:'wip', model:'', icon:'folder', title:'', desc:'', tags:[], features:[], platform:'', link:'', updatedAt:'' };
+  return { status:'wip', model:'', icon:'folder', title:'', desc:'', tags:[], features:[], platform:'', link:'', link2:'', link2Label:'', updatedAt:'' };
 }
 
 function renderAdminProjectList(){
@@ -1343,7 +1356,11 @@ function renderAdminProjectList(){
         <label class="admin-field"><span>최근 업데이트</span><input type="text" data-field="updatedAt" value="${escapeHtml(p.updatedAt || '')}" placeholder="2026-08"></label>
       </div>
       <label class="admin-field"><span>설명</span><textarea data-field="desc">${escapeHtml(p.desc || '')}</textarea></label>
-      <label class="admin-field"><span>링크 (없으면 비워두기)</span><input type="text" data-field="link" value="${escapeHtml(p.link || '')}" placeholder="https://..."></label>
+      <label class="admin-field"><span>링크1 (없으면 비워두기)</span><input type="text" data-field="link" value="${escapeHtml(p.link || '')}" placeholder="https://..."></label>
+      <div class="admin-grid">
+        <label class="admin-field"><span>링크2 URL (없으면 비워두기)</span><input type="text" data-field="link2" value="${escapeHtml(p.link2 || '')}" placeholder="https://..."></label>
+        <label class="admin-field"><span>링크2 표시 이름</span><input type="text" data-field="link2Label" value="${escapeHtml(p.link2Label || '')}" placeholder="예: 웹사이트 (비우면 자동)"></label>
+      </div>
       <label class="admin-field"><span>기술 스택 (쉼표로 구분)</span><input type="text" data-field="tags" value="${escapeHtml((p.tags || []).join(', '))}"></label>
       <label class="admin-field"><span>특징 (한 줄에 하나씩)</span><textarea data-field="features">${escapeHtml((p.features || []).join('\n'))}</textarea></label>
     </div>
@@ -1525,6 +1542,8 @@ function projectsToCode(list){
       `    features: ${JSON.stringify(p.features || [])},`,
       `    platform: ${JSON.stringify(p.platform || '')},`,
       `    link: ${JSON.stringify(p.link || '')},`,
+      `    link2: ${JSON.stringify(p.link2 || '')},`,
+      `    link2Label: ${JSON.stringify(p.link2Label || '')},`,
       `    updatedAt: ${JSON.stringify(p.updatedAt || '')}`,
     ].join('\n');
     return `  {\n${lines}\n  }`;
