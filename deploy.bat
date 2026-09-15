@@ -3,7 +3,7 @@ chcp 65001 >nul
 cd /d "%~dp0"
 
 echo ================================================
-echo      Portfolio Site Deploy  (deploy.bat v2.0)
+echo      Portfolio Site Deploy  (deploy.bat v2.1)
 echo ================================================
 echo.
 echo This syncs commits made from the website ADMIN page
