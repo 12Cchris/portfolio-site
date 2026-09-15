@@ -711,12 +711,13 @@
 /* order: 카탈로그 정렬 우선순위 (작을수록 먼저 표시). 새 상태 추가 시 order도 같이 지정하세요 */
 const STATUS_CONFIG = {
   live:         { label: "배포중",  color: "#0D9488", order: 0 },
-  done:         { label: "완성",    color: "#2563EB", order: 1 },
-  wip:          { label: "제작중",  color: "#71717A", order: 2 },
-  private:      { label: "비공개",  color: "#4F46E5", order: 3 },
-  hold:         { label: "보류",    color: "#B45309", order: 4 },
-  unsupported:  { label: "미지원",  color: "#CA8A04", order: 5 },
-  stop:         { label: "중단",    color: "#DC2626", order: 6 },
+  maintenance:  { label: "점검중",  color: "#EA580C", order: 1 },
+  done:         { label: "완성",    color: "#2563EB", order: 2 },
+  wip:          { label: "제작중",  color: "#71717A", order: 3 },
+  private:      { label: "비공개",  color: "#4F46E5", order: 4 },
+  hold:         { label: "보류",    color: "#B45309", order: 5 },
+  unsupported:  { label: "미지원",  color: "#CA8A04", order: 6 },
+  stop:         { label: "중단",    color: "#DC2626", order: 7 },
 };
 
 /* ============================================================
@@ -1119,6 +1120,7 @@ function getNoLinkLabel(status){
     hold:        '보류',
     stop:        '중단',
     unsupported: '미지원',
+    maintenance: '점검 중',
   };
   return map[status] || '—';
 }
