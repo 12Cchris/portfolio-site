@@ -713,11 +713,12 @@ const STATUS_CONFIG = {
   live:         { label: "배포중",  color: "#0D9488", order: 0 },
   maintenance:  { label: "점검중",  color: "#EA580C", order: 1 },
   done:         { label: "완성",    color: "#2563EB", order: 2 },
-  wip:          { label: "제작중",  color: "#71717A", order: 3 },
-  private:      { label: "비공개",  color: "#4F46E5", order: 4 },
-  hold:         { label: "보류",    color: "#B45309", order: 5 },
-  unsupported:  { label: "미지원",  color: "#CA8A04", order: 6 },
-  stop:         { label: "중단",    color: "#DC2626", order: 7 },
+  review:       { label: "검토중",  color: "#7C3AED", order: 3 },
+  wip:          { label: "제작중",  color: "#71717A", order: 4 },
+  private:      { label: "비공개",  color: "#4F46E5", order: 5 },
+  hold:         { label: "보류",    color: "#B45309", order: 6 },
+  unsupported:  { label: "미지원",  color: "#CA8A04", order: 7 },
+  stop:         { label: "중단",    color: "#DC2626", order: 8 },
 };
 
 /* ============================================================
@@ -1163,6 +1164,7 @@ function getNoLinkLabel(status){
     stop:        '중단',
     unsupported: '미지원',
     maintenance: '점검 중',
+    review:      '검토 중',
   };
   return map[status] || '—';
 }
