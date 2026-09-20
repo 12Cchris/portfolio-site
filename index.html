@@ -2,6 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+<!-- 포트폴리오 사이트 v1.2.1 — 코드 정리 (구조·중복·주석 정리, 동작은 그대로). 이전: v1.2.0 관리자 프로젝트 편집을 한 줄 목록 + 펼치기(상세) 방식으로 개선 / v1.1.0 상태 편집 기능 삭제 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- 캐시 방지: 배포할 때마다 방문자에게 최신 버전이 바로 보이도록, 브라우저/중간 서버가
      이 페이지를 캐시하지 않게 합니다. (GitHub Pages 자체 캐시는 이 메타태그로 막을 수
@@ -21,30 +22,26 @@
 <meta name="theme-color" content="#FAFAF9" id="theme-color-meta">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230D9488'/%3E%3Cpath d='M30 55 L45 70 L72 35' stroke='white' stroke-width='9' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 
-<!-- FOUC 방지: 첫 번째 픽셀이 그려지기 전에 올바른 테마를 적용합니다 -->
-
+<!-- FOUC 방지: 첫 화면이 그려지기 전에 저장된 테마(없으면 시스템 설정)를 먼저 적용합니다 -->
+<script>
+(function(){
+  var theme;
+  try { theme = localStorage.getItem('theme-preference'); } catch(e) {}
+  if(theme !== 'dark' && theme !== 'light'){
+    theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  document.documentElement.setAttribute('data-theme', theme);
+})();
+</script>
 
 <!-- Pretendard 웹폰트 CDN (로컬 폰트 파일 부재 시 자동 폴백) -->
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
 
-
-  
-  
-  
-  
-  <style>
-/* ============================================================
-     폰트: Pretendard는 head의 CDN 링크(jsdelivr) 하나로만 로드합니다.
-     예전에는 fonts/ 폴더의 로컬 파일과 CDN을 동시에 선언했는데,
-     같은 font-family/weight를 가리키는 @font-face가 두 곳에 있으면
-     로컬 파일이 없을 때 해당 weight가 CDN으로 자동 대체되지 않고
-     조용히 폰트 로딩에 실패하는 문제가 있어 로컬 선언은 제거했습니다.
-     오프라인 환경에서 꼭 로컬 폰트를 쓰고 싶다면, 아래처럼 하나의
-     @font-face 안에서 src를 로컬 → CDN 순으로 나열하세요(콤마로 연결).
-       @font-face{ font-family:'Pretendard'; font-weight:500;
-         src:url('fonts/Pretendard-Medium.otf') format('opentype'),
-             url('https://cdn.jsdelivr.net/.../Pretendard-Medium.woff2') format('woff2'); }
-  ============================================================ */
+<style>
+/* 폰트: Pretendard는 <head>의 CDN 링크(jsdelivr) 하나로만 불러옵니다.
+     같은 font-family/weight를 로컬 @font-face와 CDN에 따로 선언하면, 로컬 파일이 없을 때
+     CDN으로 대체되지 않고 조용히 로딩에 실패합니다. 오프라인용 로컬 폰트가 필요하면
+     하나의 @font-face 안에서 src를 "로컬 → CDN" 순으로 나열하세요(콤마로 연결). */
 
   :root{
     --bg:#FAFAF9;
@@ -66,19 +63,6 @@
     --accent:#14B8A6;
     --accent-soft:rgba(20, 184, 166, 0.14);
     --card-shadow:0 8px 24px -12px rgba(0,0,0,0.6);
-  }
-
-  @media (prefers-color-scheme: dark){
-    :root:not([data-theme="light"]){
-      --bg:#09090B;
-      --surface:#141417;
-      --ink:#F4F4F5;
-      --muted:#A1A1AA;
-      --border:#27272A;
-      --accent:#14B8A6;
-      --accent-soft:rgba(20, 184, 166, 0.14);
-      --card-shadow:0 8px 24px -12px rgba(0,0,0,0.6);
-    }
   }
 
   *{box-sizing:border-box;}
@@ -134,10 +118,6 @@
   .moon-icon{display:inline-block;}
   [data-theme="dark"] .sun-icon{display:inline-block;}
   [data-theme="dark"] .moon-icon{display:none;}
-  @media (prefers-color-scheme: dark){
-    :root:not([data-theme="light"]) .sun-icon{display:inline-block;}
-    :root:not([data-theme="light"]) .moon-icon{display:none;}
-  }
 
   /* ---------- Top bar 좌측 정렬 ---------- */
   .top-bar-left{display:flex; align-items:baseline; gap:32px;}
@@ -212,7 +192,9 @@
   }
 
   /* ---------- Admin ---------- */
-  .page-admin-body{max-width:640px;}
+  .page-admin-body{max-width:none;}
+  /* 프로젝트 목록은 한 줄 표처럼 넓게 보여주고, 나머지 섹션(연결 정보 등)은 좁게 유지합니다 */
+  .admin-section:not(.admin-section-wide){max-width:640px;}
   .admin-section{
     border-top:1px solid var(--border);
     padding-top:28px; margin-top:28px;
@@ -272,27 +254,75 @@
     background:var(--surface); color:#DC2626; border:1px solid var(--border);
   }
   .admin-btn-danger:hover{border-color:#DC2626;}
+  .admin-section-flush{border-top:none; margin-top:0; padding-top:0;}
+  .admin-title{font-size:22px; margin-bottom:6px;}
+  #admin-gate .creator-page-role{margin-bottom:24px;}
+  .page-admin-body .creator-page-role{margin-bottom:28px;}
+  .admin-head{display:flex; justify-content:space-between; align-items:flex-start; gap:12px;}
+  .admin-head .admin-btn{flex-shrink:0;}
+  .admin-grid-narrow{max-width:640px;}
+  .admin-hint-tight{margin:8px 0 0;}
   .admin-log{font-size:13px; line-height:1.7; margin-top:14px; white-space:pre-line;}
   .admin-log.is-error{color:#DC2626;}
   .admin-log.is-success{color:var(--accent);}
-  .admin-project-card{
-    border:1px solid var(--border); border-radius:12px;
-    padding:18px; margin-bottom:14px;
+  /* ---------- 프로젝트 편집: 한 줄로 훑어보고, 펼치면 상세 수정 ---------- */
+  .admin-list-tools{display:flex; gap:8px; flex-wrap:wrap; margin:0 0 14px;}
+  .admin-btn-sm{padding:6px 14px; font-size:12.5px;}
+  .admin-list-head,
+  .admin-row{
+    display:grid;
+    grid-template-columns:32px minmax(170px,2.2fr) 116px 116px minmax(80px,1fr) 96px auto;
+    gap:8px; align-items:center;
+  }
+  .admin-list-head{
+    padding:0 12px 6px 16px;
+    font-size:12px; font-weight:700; color:var(--muted);
+  }
+  .admin-item{
+    border:1px solid var(--border);
+    border-left:4px solid var(--dot, var(--border));
+    border-radius:10px;
     background:var(--surface);
+    margin-bottom:8px;
   }
-  .admin-project-card-head{
-    display:flex; justify-content:space-between; align-items:center;
-    margin-bottom:12px;
+  .admin-row{padding:10px 12px;}
+  .admin-row > div{min-width:0;}
+  .admin-row input,
+  .admin-row select{
+    width:100%; min-width:0; box-sizing:border-box;
+    font-family:inherit; font-size:13.5px; font-weight:500;
+    color:var(--ink);
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:7px 10px;
+    outline:none;
+    transition:border-color .2s ease;
   }
-  .admin-project-card-head span{font-size:13px; font-weight:700; color:var(--muted);}
-  .admin-project-card-actions{display:flex; gap:8px;}
-  .admin-project-card-actions button{
-    background:none; border:none; padding:4px 8px;
+  .admin-row input:focus,
+  .admin-row select:focus{border-color:var(--accent);}
+  .admin-cell-num{font-size:12px; font-weight:700; color:var(--muted); text-align:center;}
+  .admin-cell-label{display:none; font-size:11px; font-weight:700; color:var(--muted); margin-bottom:3px;}
+  .admin-summary{margin-top:4px; font-size:11.5px; color:var(--muted);}
+  .admin-row-actions{display:flex; align-items:center; justify-content:flex-end; gap:2px;}
+  .admin-row-actions button{
+    background:none; border:none; padding:4px 6px;
     font-family:inherit; font-size:12px; font-weight:700;
-    color:var(--muted); cursor:pointer;
+    color:var(--muted); cursor:pointer; white-space:nowrap;
   }
-  .admin-project-card-actions button:hover{color:var(--accent);}
-  .admin-project-card-actions button.admin-remove-project:hover{color:#DC2626;}
+  .admin-row-actions button:hover{color:var(--accent);}
+  .admin-row-actions button:disabled{opacity:.35; cursor:default; color:var(--muted);}
+  .admin-row-actions button.admin-toggle-detail[aria-expanded="true"]{color:var(--accent);}
+  .admin-row-actions button.admin-remove-project:hover{color:#DC2626;}
+  .admin-detail{border-top:1px dashed var(--border); padding:16px 16px 4px;}
+  .admin-detail[hidden]{display:none;}
+  @media (max-width: 860px){
+    .admin-list-head{display:none;}
+    .admin-row{grid-template-columns:1fr 1fr;}
+    .admin-cell-num{display:none;}
+    .admin-cell-title, .admin-row-actions{grid-column:1 / -1;}
+    .admin-cell-label{display:block;}
+  }
   @media (max-width: 560px){
     .admin-grid{grid-template-columns:1fr;}
   }
@@ -627,9 +657,9 @@
     WORKSHOP LOG
   </button>
 
-  <div id="admin-gate" class="admin-section" style="border-top:none; margin-top:0; padding-top:0;">
-    <h1 class="creator-page-name" style="font-size:22px; margin-bottom:6px;">관리자 도구</h1>
-    <p class="creator-page-role" style="margin-bottom:24px;">
+  <div id="admin-gate" class="admin-section admin-section-flush">
+    <h1 class="creator-page-name admin-title">관리자 도구</h1>
+    <p class="creator-page-role">
       이 화면은 비밀번호로 잠겨 있습니다.
     </p>
 
@@ -644,11 +674,11 @@
   </div>
 
   <div class="page-admin-body" id="admin-body" hidden>
-    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
-      <h1 class="creator-page-name" style="font-size:22px; margin-bottom:6px;">관리자 도구</h1>
-      <button type="button" id="admin-logout-btn" class="admin-btn admin-btn-ghost" style="flex-shrink:0;">🔒 잠그기</button>
+    <div class="admin-head">
+      <h1 class="creator-page-name admin-title">관리자 도구</h1>
+      <button type="button" id="admin-logout-btn" class="admin-btn admin-btn-ghost">🔒 잠그기</button>
     </div>
-    <p class="creator-page-role" style="margin-bottom:28px;">
+    <p class="creator-page-role">
       아래 정보를 채우면, 프로젝트를 편집하고 <b>[GitHub에 저장하고 배포]</b> 버튼 한 번으로
       바로 커밋됩니다. 몇십 초 후 실제 사이트에 반영됩니다. 자리를 비울 땐 위 <b>잠그기</b> 버튼을 눌러주세요.
     </p>
@@ -687,20 +717,17 @@
         <button type="button" id="gh-save-config" class="admin-btn admin-btn-ghost">지금 바로 저장</button>
         <button type="button" id="gh-clear-config" class="admin-btn admin-btn-ghost">저장된 정보 지우기</button>
       </div>
-      <p class="admin-hint" style="margin-top:8px; margin-bottom:0;">위 정보는 입력하는 즉시 자동으로 암호화되어 저장됩니다 (버튼은 안 눌러도 됩니다).</p>
+      <p class="admin-hint admin-hint-tight">위 정보는 입력하는 즉시 자동으로 암호화되어 저장됩니다 (버튼은 안 눌러도 됩니다).</p>
     </section>
 
-    <section class="admin-section">
-      <h2 class="admin-section-title">2. 상태 편집</h2>
-      <p class="admin-hint">프로젝트 카드에 쓰이는 상태 종류(배포중, 완성 등)를 추가/수정/삭제/순서변경할 수 있습니다.</p>
-      <div id="admin-status-list"></div>
-      <button type="button" id="admin-add-status" class="admin-btn admin-btn-ghost">+ 새 상태 추가</button>
-    </section>
-
-    <section class="admin-section">
-      <h2 class="admin-section-title">3. 프로젝트 편집</h2>
-      <p class="admin-hint">현재 사이트에 보이는 프로젝트 목록입니다. 수정하고 맨 아래 저장 버튼을 누르세요.</p>
-      <div class="admin-grid">
+    <section class="admin-section admin-section-wide">
+      <h2 class="admin-section-title">2. 프로젝트 편집</h2>
+      <p class="admin-hint">
+        프로젝트가 한 줄씩 보입니다. 제목·상태·버전·플랫폼·최근 업데이트는 바로 고치고,
+        설명·링크·아이콘·기술 스택·특징은 <b>[상세 ▾]</b>를 눌러 펼쳐서 고치세요.
+        다 고쳤으면 맨 아래 저장 버튼을 누르면 됩니다.
+      </p>
+      <div class="admin-grid admin-grid-narrow">
         <label class="admin-field">
           <span>일괄 정렬 (적용하면 아래 목록 순서가 실제로 바뀝니다)</span>
           <select id="admin-project-sort">
@@ -713,6 +740,13 @@
       </div>
       <div class="admin-actions">
         <button type="button" id="admin-apply-sort" class="admin-btn admin-btn-ghost">이 순서로 정렬 적용</button>
+      </div>
+      <div class="admin-list-tools">
+        <button type="button" id="admin-expand-all" class="admin-btn admin-btn-ghost admin-btn-sm">모두 펼치기</button>
+        <button type="button" id="admin-collapse-all" class="admin-btn admin-btn-ghost admin-btn-sm">모두 접기</button>
+      </div>
+      <div class="admin-list-head" aria-hidden="true">
+        <span>#</span><span>제목</span><span>상태</span><span>버전</span><span>플랫폼</span><span>업데이트</span><span></span>
       </div>
       <div id="admin-project-list"></div>
       <button type="button" id="admin-add-project" class="admin-btn admin-btn-ghost">+ 새 프로젝트 추가</button>
@@ -737,37 +771,39 @@
   </div>
 </footer>
 
-  
-  <script>
-(function(){
-  var t = localStorage.getItem('theme-preference');
-  document.documentElement.setAttribute('data-theme',
-    (t === 'dark' || t === 'light') ? t :
-    window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-})();
-
+<script>
+/* ============================================================
+   목차
+   ------------------------------------------------------------
+   1. 설정·데이터  상태(STATUS_CONFIG) / 프로젝트(PROJECTS) / 제작자 링크 / 아이콘
+   2. 공용 유틸    HTML 이스케이프, URL 검사, base64
+   3. 아이콘       lucide.dev 자동 로딩
+   4. 카탈로그     카드, 필터, 검색, 정렬
+   5. 제작자 정보  링크 버튼, 이메일 복사
+   6. 관리자 도구  잠금, 토큰 암호화, 프로젝트 편집, GitHub 저장
+   7. 테마         라이트 / 다크
+   8. 화면 전환    카탈로그 / 제작자 정보 / 관리자
+   9. 시작
+============================================================ */
 
 
 /* ============================================================
-   상태(status) 추가/삭제하는 법
-   ------------------------------------------------------------
-   이제 admin 페이지의 "상태 편집" 섹션에서 직접 추가/수정/삭제/순서변경이
-   가능합니다. 코드를 직접 건드리지 않아도 됩니다.
-
-   코드로 직접 고치고 싶을 때는 아래 STATUS_CONFIG 객체에서 한 줄만
-   추가하거나 지우면 됩니다. key는 프로젝트의 status 값으로 쓰는
-   이름(영문), label은 화면에 보일 한글 글자, color는 점과 글자 색입니다.
-
-   예) 새 상태 "테스트중"을 추가하고 싶다면:
-   testing: { label: "테스트중", color: "#2563EB" },
-
-   상태를 지우고 싶다면 그 줄을 통째로 삭제하면 됩니다.
-   (단, 삭제한 상태를 쓰던 프로젝트가 있으면 기본값인 wip 스타일로 표시됩니다)
+   1. 설정·데이터
 ============================================================ */
-/* 관리자 도구가 아래 STATUS_DATA_START ~ STATUS_DATA_END 마커 사이만
-   자동으로 찾아서 교체합니다 (admin 페이지 "상태 편집"에서 수정 가능).
-   두 마커 줄은 직접 지우지 마세요. */
-/* STATUS_DATA_START */
+
+/* ---------- 상태(status) 추가/삭제하는 법 ----------
+   상태 종류는 아래 STATUS_CONFIG 객체를 코드로 직접 고쳐서 관리합니다.
+   한 줄만 추가하거나 지우면 됩니다.
+     key   : 프로젝트의 status 값으로 쓰는 이름(영문)
+     label : 화면에 보일 한글 글자
+     color : 점과 글자 색
+     order : 정렬/필터 버튼에 쓰이는 순서 (작을수록 앞)
+
+   예) 새 상태 "테스트중"을 추가하려면:
+   testing: { label: "테스트중", color: "#2563EB", order: 9 },
+
+   상태를 지우려면 그 줄을 통째로 삭제하세요.
+   (삭제한 상태를 쓰던 프로젝트는 기본값인 wip 스타일로 표시됩니다) */
 const STATUS_CONFIG = {
   live:         { label: "배포중",  color: "#0D9488", order: 0 },
   maintenance:  { label: "점검중",  color: "#EA580C", order: 1 },
@@ -779,36 +815,32 @@ const STATUS_CONFIG = {
   unsupported:  { label: "미지원",  color: "#CA8A04", order: 7 },
   stop:         { label: "중단",    color: "#DC2626", order: 8 },
 };
-/* STATUS_DATA_END */
 
-/* ============================================================
-   새 프로젝트 추가하는 법
-   ------------------------------------------------------------
+/* ---------- 새 프로젝트 추가하는 법 ----------
    아래 PROJECTS 배열에 객체 하나만 추가하면 카드가 자동으로 생깁니다.
+   (코드를 열지 않고 관리자 화면에서 추가/수정하는 방법도 있습니다)
 
-   status:  위 STATUS_CONFIG에 있는 key 중 하나 (예: "live", "hold" 등)
-   icon:    아래 두 가지 방법 중 아무거나 사용할 수 있습니다.
-            1) 내장 아이콘: "clock" | "music" | "wallet" | "code" | "star"
-               | "folder" | "chart" | "lock" | "phone" | "bell" | "globe"
-               → 인터넷 연결 없이도 즉시 표시됩니다.
-            2) 그 외 아무 이름이나 적으면 https://lucide.dev/icons 에서
-               같은 이름의 아이콘을 자동으로 찾아와 보여줍니다.
-               예) icon: "rocket"  또는  icon: "gamepad-2"
-               → lucide.dev 사이트에서 원하는 아이콘을 찾은 뒤,
-                 그 아이콘 이름을 그대로 icon 필드에 적기만 하면 됩니다.
-                 (SVG 코드를 직접 작성할 필요가 없습니다)
-   link:    깃허브 등 링크. 없으면 "" 로 두면 됩니다.
-   link2:   두 번째 링크(선택). 없으면 "" 로 두면 됩니다.
-   link2Label: link2에 표시할 이름. 비워두면 link처럼 자동으로 라벨이 붙습니다.
-               (예: link2Label: "웹사이트")
-   tags:    기술 스택 배열, 원하는 만큼 추가 가능
-   features: 특징 목록, 원하는 만큼 추가 가능
-   updatedAt: "YYYY-MM" 또는 "YYYY-MM-DD" 형식. 이 프로젝트를 마지막으로 손본 날짜.
-              일(day)까지 몰라도 괜찮습니다 — "2026-08"처럼 연월만 적어도 됩니다.
-              히어로의 UPDATED 표시가 여기 값들 중 가장 최신 것을 보여줍니다
-              (예전에는 오늘 날짜를 그냥 찍어서 실제 업데이트 여부와 무관하게
-              항상 "이번 달"로 보이는 버그가 있었습니다).
-============================================================ */
+   title / desc : 카드 제목 / 설명
+   model:       버전 표기 (예: "v1.0")
+   platform:    플랫폼 표기 (예: "Windows Desktop", "Web")
+   status:      위 STATUS_CONFIG에 있는 key 중 하나 (예: "live", "hold")
+   icon:        아래 두 가지 방법 중 아무거나 사용할 수 있습니다.
+                1) 내장 아이콘: "clock" | "music" | "wallet" | "code" | "star"
+                   | "folder" | "chart" | "lock" | "phone" | "bell" | "globe"
+                   → 인터넷 연결 없이도 즉시 표시됩니다.
+                2) 그 외 아무 이름이나 적으면 https://lucide.dev/icons 에서
+                   같은 이름의 아이콘을 자동으로 찾아와 보여줍니다.
+                   예) icon: "rocket"  또는  icon: "gamepad-2"
+                   (SVG 코드를 직접 작성할 필요 없이 아이콘 이름만 적으면 됩니다)
+   link:        깃허브 등 링크. 없으면 "" 로 두면 됩니다.
+   link2:       두 번째 링크(선택). 없으면 "" 로 두면 됩니다.
+   link2Label:  link2에 표시할 이름. 비워두면 link처럼 자동으로 라벨이 붙습니다.
+                (예: link2Label: "웹사이트")
+   tags:        기술 스택 배열, 원하는 만큼 추가 가능
+   features:    특징 목록 배열, 원하는 만큼 추가 가능
+   updatedAt:   "YYYY-MM" 또는 "YYYY-MM-DD" 형식. 이 프로젝트를 마지막으로 손본 날짜.
+                일(day)까지 몰라도 괜찮습니다 — "2026-08"처럼 연월만 적어도 됩니다.
+                히어로의 UPDATED 표시가 이 값들 중 가장 최신 것을 보여줍니다. */
 /* 관리자 도구가 아래 PROJECTS_DATA_START ~ PROJECTS_DATA_END 마커 사이만
    자동으로 찾아서 교체합니다. 두 마커 줄은 직접 지우지 마세요. */
 /* PROJECTS_DATA_START */
@@ -928,17 +960,40 @@ const PROJECTS = [
 ];
 /* PROJECTS_DATA_END */
 
-/* ============================================================
-   내장 아이콘 목록 (인터넷 연결 없이도 즉시 표시됨)
-   기존: clock, music, wallet, code, star, folder
-   추가: chart, lock, phone, bell, globe
+/* ---------- 제작자 정보 페이지의 링크 버튼(GitHub, 이메일 등) 추가하는 법 ----------
+   아래 CREATOR_LINKS 배열에 객체 하나만 추가하면 버튼이 자동으로 생깁니다.
 
-   이 목록에 없는 이름을 icon 필드에 적으면, 아래 fetchLucideIcon()이
-   https://lucide.dev/icons 에서 같은 이름의 아이콘을 자동으로 가져와
-   보여줍니다. 즉, 아이콘을 새로 추가하고 싶을 때 이 객체를 직접
-   수정할 필요 없이, PROJECTS 배열의 icon 값만 원하는 lucide 아이콘
-   이름으로 바꿔주면 됩니다.
-============================================================ */
+   일반 링크(GitHub, 블로그 등):
+     icon:  아래 LINK_ICONS에 있는 이름 중 하나
+            ("github" | "mail" | "link" | "globe" | "phone")
+            이 목록에 없는 이름을 적으면 https://lucide.dev/icons 에서
+            같은 이름의 아이콘을 자동으로 가져옵니다. 예) icon: "twitter"
+     label: 버튼에 표시할 글자
+     url:   이동할 주소. http(s):// 또는 tel: 만 허용됩니다.
+
+     예) 블로그 버튼을 추가하고 싶다면 배열에 이렇게 한 줄 추가:
+     { icon: "globe", label: "블로그", url: "https://example.com" },
+
+   이메일 버튼(조금 다릅니다):
+     mailto: 링크 대신, 클릭하면 주소가 클립보드에 복사되는 버튼으로 만듭니다.
+     스팸 수집 봇이 소스에서 이메일을 그대로 긁어가지 못하도록, 주소를
+     "거꾸로 뒤집은 문자열"로 저장해뒀다가 클릭 시점에만 원래대로 되돌립니다.
+
+     type: "email" 로 지정하고, emailReversed에 뒤집은 주소를 넣으세요.
+     예) 이메일이 "hello@example.com" 이라면 거꾸로 뒤집은 "moc.elpmaxe@olleh" 를:
+     { icon: "mail", label: "이메일", type: "email", emailReversed: "moc.elpmaxe@olleh" }, */
+const CREATOR_LINKS = [
+  { icon: "github", label: "GitHub", url: "https://github.com/12Cchris" },
+  { icon: "mail",   label: "이메일", type: "email", emailReversed: "moc.revan@21ohayujj" },
+
+  // 여기 아래에 새 버튼을 이런 형태로 추가하세요:
+  // { icon: "globe", label: "블로그", url: "https://example.com" },
+];
+
+/* ---------- 내장 아이콘 (인터넷 연결 없이도 즉시 표시됨) ----------
+   여기(ICONS / LINK_ICONS)에 없는 이름을 icon 필드에 적으면, 3번 섹션의
+   fetchLucideIcon()이 lucide.dev에서 같은 이름의 아이콘을 자동으로 가져옵니다.
+   그러니 새 아이콘이 필요할 때 이 객체들을 직접 고칠 필요는 없습니다. */
 const ICONS = {
   clock:  `<circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="1.6"/><path d="M11 6.5V11L14 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>`,
   music:  `<path d="M4 14V8M8 15V6M12 17V4M16 15V6M20 14V8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>`,
@@ -953,21 +1008,88 @@ const ICONS = {
   globe:  `<circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="1.6"/><path d="M11 3C9 5.5 8 8 8 11s1 5.5 3 8M11 3c2 2.5 3 5 3 8s-1 5.5-3 8M3 11h16" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>`,
 };
 
+const LINK_ICONS = {
+  github: `<path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>`,
+  mail:   `<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>`,
+  link:   `<path d="M10 13a5 5 0 0 0 7.07 0l1.93-1.93a5 5 0 0 0-7.07-7.07L10.5 5.5"/><path d="M14 11a5 5 0 0 0-7.07 0L5 12.93a5 5 0 0 0 7.07 7.07L13.5 18.5"/>`,
+  globe:  `<circle cx="12" cy="12" r="9"/><path d="M12 3c-2.2 2.7-3.3 6-3.3 9s1.1 6.3 3.3 9c2.2-2.7 3.3-6 3.3-9s-1.1-6.3-3.3-9M3.3 12h17.4"/>`,
+  phone:  `<rect x="7" y="2" width="10" height="20" rx="2"/><circle cx="12" cy="18" r="0.9" fill="currentColor"/>`,
+  check:  `<path d="M4 12l5 5L20 6"/>`,
+};
+
+
 /* ============================================================
-   lucide.dev 아이콘 자동 로딩
-   ------------------------------------------------------------
-   ICONS / LINK_ICONS 객체에 없는 이름이 icon 필드에 적히면,
-   jsdelivr CDN에 올라와 있는 lucide-static 아이콘 SVG를 가져와
-   화면에 채워 넣습니다. 같은 이름은 한 번만 요청하도록 캐시해두고,
-   인터넷이 없거나 이름을 못 찾으면 조용히 기존 기본 아이콘(폴더/링크
-   모양)을 그대로 둡니다 — 페이지가 깨지지 않습니다.
+   2. 공용 유틸
 ============================================================ */
+
+const $ = id => document.getElementById(id);
+
+/* 요소가 있을 때만 이벤트를 연결합니다 (HTML에서 요소를 지워도 나머지 기능은 계속 동작) */
+function on(id, eventName, handler){
+  const el = $(id);
+  if(el) el.addEventListener(eventName, handler);
+}
+
+const deepClone = value => JSON.parse(JSON.stringify(value));
+
+const HTML_ESCAPES = { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' };
+
+/* 텍스트를 HTML에 안전하게 넣을 수 있게 바꿉니다.
+   따옴표까지 처리하므로 value="..." 같은 속성값 안에서도 안전합니다. */
+function escapeHtml(str){
+  return String(str ?? '').replace(/[&<>"']/g, ch => HTML_ESCAPES[ch]);
+}
+
+/* XSS 방지: 허용한 프로토콜 외(javascript: 등)는 '#'으로 막습니다.
+   기본은 http/https만 허용하고, 필요하면 두 번째 인자로 목록을 넘깁니다. */
+function safeUrl(url, allowedProtocols = ['http:', 'https:']){
+  try {
+    if(allowedProtocols.includes(new URL(url).protocol)) return url;
+  } catch(e) {}
+  return '#';
+}
+
+/* 상태 key에 해당하는 설정을 돌려줍니다 (모르는 상태는 wip 스타일) */
+const FALLBACK_STATUS = { label: '알 수 없음', color: '#71717A', order: 999 };
+function getStatusInfo(key){
+  return STATUS_CONFIG[key] || STATUS_CONFIG.wip || FALLBACK_STATUS;
+}
+
+/* 유니코드(한글 등)를 GitHub API가 요구하는 base64로 안전하게 변환합니다.
+   (한 번에 펼치면 큰 파일에서 호출 인자 한도를 넘으므로 조각내서 변환합니다) */
+function bytesToBase64(bytes){
+  let binary = '';
+  for(let i = 0; i < bytes.length; i += 0x8000){
+    binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  }
+  return btoa(binary);
+}
+function base64ToBytes(b64){
+  return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+}
+function utf8ToBase64(str){
+  return bytesToBase64(new TextEncoder().encode(str));
+}
+function base64ToUtf8(b64){
+  /* ignoreBOM: 파일 맨 앞의 BOM이 있다면 지우지 않고 그대로 보존합니다 */
+  return new TextDecoder('utf-8', { ignoreBOM: true }).decode(base64ToBytes(b64.replace(/\n/g, '')));
+}
+
+
+/* ============================================================
+   3. 아이콘 — lucide.dev 자동 로딩
+   ------------------------------------------------------------
+   ICONS / LINK_ICONS에 없는 이름이 icon 필드에 적히면, jsdelivr CDN의
+   lucide-static 아이콘 SVG를 가져와 화면에 채워 넣습니다. 같은 이름은
+   한 번만 요청하도록 캐시해두고, 인터넷이 없거나 이름을 못 찾으면 조용히
+   기존 기본 아이콘(폴더/링크 모양)을 그대로 둡니다 — 페이지가 깨지지 않습니다.
+============================================================ */
+
 const remoteIconCache = new Map(); // 아이콘 이름 → 불러온 SVG 내부 코드 (null = 실패)
 
 /* 외부(CDN)에서 받아온 SVG는 신뢰할 수 없는 입력으로 취급합니다.
-   <script> 태그, on클릭 같은 이벤트 핸들러 속성, javascript: 링크를
-   전부 제거한 뒤에만 화면에 삽입합니다. (CDN이 해킹당해 악성 코드가
-   섞여 들어와도 실행되지 않도록 막는 안전장치) */
+   <script> 태그, onclick 같은 이벤트 핸들러 속성, javascript: 링크를 전부
+   제거한 뒤에만 화면에 삽입합니다. (CDN에 악성 코드가 섞여도 실행되지 않도록) */
 function sanitizeSvgElement(svgEl){
   svgEl.querySelectorAll('script').forEach(el => el.remove());
   [svgEl, ...svgEl.querySelectorAll('*')].forEach(el => {
@@ -982,10 +1104,10 @@ function sanitizeSvgElement(svgEl){
 async function fetchLucideIcon(name){
   if(remoteIconCache.has(name)) return remoteIconCache.get(name);
   try{
-    /* @latest 대신 특정 버전을 고정해뒀습니다. lucide 쪽에서 나중에 breaking
-       change가 생겨도 이 사이트의 아이콘이 갑자기 깨지지 않습니다.
-       업데이트하고 싶다면 https://www.npmjs.com/package/lucide-static 에서
-       최신 버전을 확인해 아래 숫자만 바꿔주면 됩니다. */
+    /* @latest 대신 특정 버전을 고정해서, lucide 쪽에 breaking change가 생겨도
+       이 사이트의 아이콘이 갑자기 깨지지 않게 했습니다. 업데이트하고 싶다면
+       https://www.npmjs.com/package/lucide-static 에서 최신 버전을 확인해
+       아래 숫자만 바꿔주면 됩니다. */
     const res = await fetch(`https://cdn.jsdelivr.net/npm/lucide-static@1.41.0/icons/${encodeURIComponent(name)}.svg`);
     if(!res.ok) throw new Error('icon not found');
     const text = await res.text();
@@ -1002,13 +1124,12 @@ async function fetchLucideIcon(name){
   }
 }
 
-/* 카드/링크가 화면에 그려진 뒤, data-remote-icon 속성이 붙은 svg들에 대해
-   위 함수로 실제 아이콘을 비동기로 가져와 채워 넣습니다 */
+/* 카드/링크가 그려진 뒤, data-remote-icon 속성이 붙은 svg들의 실제 아이콘을
+   비동기로 가져와 채워 넣습니다 */
 async function enhanceRemoteIcons(root){
   const targets = root.querySelectorAll('[data-remote-icon]');
   await Promise.all(Array.from(targets).map(async el => {
-    const name = el.dataset.remoteIcon;
-    const inner = await fetchLucideIcon(name);
+    const inner = await fetchLucideIcon(el.dataset.remoteIcon);
     if(inner){
       el.innerHTML = inner;
       el.setAttribute('viewBox', '0 0 24 24');
@@ -1016,156 +1137,123 @@ async function enhanceRemoteIcons(root){
   }));
 }
 
+
 /* ============================================================
-   제작자 정보 페이지의 링크 버튼(GitHub, 이메일 등) 추가하는 법
-   ------------------------------------------------------------
-   아래 CREATOR_LINKS 배열에 객체 하나만 추가하면 버튼이 자동으로 생깁니다.
-   더 이상 HTML에서 <a> 태그와 SVG 아이콘을 직접 쓸 필요가 없습니다.
-
-   일반 링크(GitHub, 블로그 등):
-     icon:  아래 LINK_ICONS에 있는 이름 중 하나
-            ("github" | "mail" | "link" | "globe" | "phone")
-            이 목록에 없는 이름을 적으면 https://lucide.dev/icons 에서
-            같은 이름의 아이콘을 자동으로 가져옵니다 (LINK_ICONS를 직접
-            수정할 필요 없음). 예) icon: "twitter"
-     label: 버튼에 표시할 글자
-     url:   이동할 주소. http(s):// 또는 tel: 만 허용됩니다.
-
-     예) 블로그 버튼을 추가하고 싶다면 아래 배열에 이렇게 한 줄 추가:
-     { icon: "globe", label: "블로그", url: "https://example.com" },
-
-   이메일 버튼(조금 다릅니다):
-     mailto: 링크 대신, 클릭하면 주소가 클립보드에 복사되는 버튼으로 만듭니다.
-     또한 스팸 수집 봇이 HTML/JS 소스에서 이메일을 그대로 긁어가지 못하도록,
-     주소를 "거꾸로 뒤집은 문자열"로 저장해뒀다가 클릭 시점에만 원래대로 되돌립니다.
-
-     type: "email" 로 지정하고, emailReversed에 뒤집은 주소를 넣으세요.
-     예) 이메일이 "hello@example.com" 이라면:
-       거꾸로 뒤집으면 → "moc.elpmaxe@olleh"
-       { icon: "mail", label: "이메일", type: "email", emailReversed: "moc.elpmaxe@olleh" },
+   4. 카탈로그 — 카드, 필터, 검색, 정렬
 ============================================================ */
-const CREATOR_LINKS = [
-  { icon: "github", label: "GitHub", url: "https://github.com/12Cchris" },
-  { icon: "mail",   label: "이메일", type: "email", emailReversed: "moc.revan@21ohayujj" },
 
-  // 여기 아래에 새 버튼을 이런 형태로 추가하세요:
-  // { icon: "globe", label: "블로그", url: "https://example.com" },
-];
+let currentFilter = 'all';
+let currentSearch = '';
+let currentSort = 'manual';
+let projectsByTitle = new Map(); // renderAll()에서 매번 새로 채워집니다 (제목 → 프로젝트)
 
-/* 링크 버튼에 쓸 수 있는 내장 아이콘 목록 (인터넷 연결 없이도 즉시 표시됨).
-   여기 없는 이름을 쓰면 위 fetchLucideIcon()이 lucide.dev에서 자동으로
-   가져오므로, 이 목록에 직접 추가하지 않아도 됩니다 */
-const LINK_ICONS = {
-  github: `<path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>`,
-  mail:   `<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>`,
-  link:   `<path d="M10 13a5 5 0 0 0 7.07 0l1.93-1.93a5 5 0 0 0-7.07-7.07L10.5 5.5"/><path d="M14 11a5 5 0 0 0-7.07 0L5 12.93a5 5 0 0 0 7.07 7.07L13.5 18.5"/>`,
-  globe:  `<circle cx="12" cy="12" r="9"/><path d="M12 3c-2.2 2.7-3.3 6-3.3 9s1.1 6.3 3.3 9c2.2-2.7 3.3-6 3.3-9s-1.1-6.3-3.3-9M3.3 12h17.4"/>`,
-  phone:  `<rect x="7" y="2" width="10" height="20" rx="2"/><circle cx="12" cy="18" r="0.9" fill="currentColor"/>`,
-  check:  `<path d="M4 12l5 5L20 6"/>`,
+/* status가 없는 프로젝트(링크 자리)에 보여줄 대체 텍스트 */
+const NO_LINK_LABELS = {
+  private:     '비공개',
+  wip:         '준비 중',
+  hold:        '보류',
+  stop:        '중단',
+  unsupported: '미지원',
+  maintenance: '점검 중',
+  review:      '검토 중',
 };
+const getNoLinkLabel = status => NO_LINK_LABELS[status] || '—';
 
-/* http(s), tel 외의 프로토콜(javascript: 등)은 차단합니다.
-   (mailto:는 더 이상 안 쓰므로 허용 목록에서 제외했습니다 — 이메일은 클립보드 복사 방식으로 처리됩니다) */
-function safeLinkUrl(url){
+/* 링크 도메인에 맞는 라벨 (GitHub이 아닌 링크도 대비) */
+function getLinkLabel(url){
   try {
-    const parsed = new URL(url);
-    if(['http:', 'https:', 'tel:'].includes(parsed.protocol)) return url;
+    const host = new URL(url).hostname.replace(/^www\./, '');
+    if(host.includes('github.com')) return 'GitHub ↗';
   } catch(e) {}
-  return '#';
+  return '자세히 보기 ↗';
 }
 
-/* 뒤집어 저장해둔 이메일 문자열을 원래대로 되돌립니다 */
-function decodeEmail(reversed){
-  return reversed.split('').reverse().join('');
+function linkAnchor(url, label, ariaLabel){
+  return `<a href="${safeUrl(url)}" target="_blank" rel="noopener noreferrer" aria-label="${escapeHtml(ariaLabel)}">${escapeHtml(label)}</a>`;
 }
 
-/* 텍스트를 클립보드에 복사하고, 버튼 라벨을 잠깐 "복사됨!"으로 바꿔 피드백을 줍니다 */
-function copyEmailToClipboard(email, btnEl){
-  const labelEl = btnEl.querySelector('.creator-link-label');
-  const originalLabel = labelEl ? labelEl.textContent : '';
+/* ---------- 카드 렌더링 ---------- */
+function renderCard(p){
+  const statusInfo = getStatusInfo(p.status);
+  const tags  = (p.tags     || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('');
+  const feats = (p.features || []).map(f => `<li>${escapeHtml(f)}</li>`).join('');
 
-  function showCopiedFeedback(){
-    if(!labelEl) return;
-    labelEl.textContent = '복사됨!';
-    btnEl.classList.add('copied');
-    window.clearTimeout(btnEl._copyResetTimer);
-    btnEl._copyResetTimer = window.setTimeout(() => {
-      labelEl.textContent = originalLabel;
-      btnEl.classList.remove('copied');
-    }, 1600);
-  }
+  /* ICONS에 없는 이름이면 lucide.dev 좌표계(24x24)에 맞추고, data-remote-icon을 붙여
+     enhanceRemoteIcons()가 실제 아이콘으로 채워 넣도록 표시해둡니다 */
+  const knownIcon  = ICONS[p.icon];
+  const iconSvg    = knownIcon || ICONS.folder;
+  const iconViewBox = knownIcon ? '0 0 22 22' : '0 0 24 24';
+  const remoteAttr = knownIcon ? '' : ` data-remote-icon="${escapeHtml(p.icon || '')}"`;
 
-  if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(email).then(showCopiedFeedback).catch(() => fallbackCopy(email, showCopiedFeedback));
-  } else {
-    fallbackCopy(email, showCopiedFeedback);
-  }
+  /* 링크는 최대 2개까지 지원합니다. 두 번째 링크(link2)는 라벨(link2Label)을 직접
+     입력할 수 있고, 비워두면 첫 번째 링크처럼 자동으로 라벨이 붙습니다. */
+  const title = p.title || '';
+  const link1Html = p.link
+    ? linkAnchor(p.link, getLinkLabel(p.link), `${title} 관련 링크 열기 (새 창)`)
+    : '';
+  const link2Html = p.link2
+    ? linkAnchor(p.link2, (p.link2Label || '').trim() || getLinkLabel(p.link2), `${title} 관련 링크 2 열기 (새 창)`)
+    : '';
+  const linkHtml = (link1Html || link2Html)
+    ? `<span class="card-links">${link1Html}${link2Html}</span>`
+    : `<span>${escapeHtml(getNoLinkLabel(p.status))}</span>`;
+
+  return `
+    <article class="card" data-status="${escapeHtml(p.status)}" data-title="${escapeHtml(title)}">
+      <div class="card-top">
+        <span class="status" style="--dot:${statusInfo.color}">${escapeHtml(statusInfo.label)}</span>
+        <span class="model">${escapeHtml(p.model || '')}</span>
+      </div>
+      <div class="icon-wrap">
+        <svg width="22" height="22" viewBox="${iconViewBox}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"${remoteAttr}>${iconSvg}</svg>
+      </div>
+      <h3>${escapeHtml(title)}</h3>
+      <p class="desc">${escapeHtml(p.desc || '')}</p>
+      <div class="tags">${tags}</div>
+      <ul class="feat">${feats}</ul>
+      <div class="card-foot">
+        <span>${escapeHtml(p.platform || '')}</span>
+        ${linkHtml}
+      </div>
+    </article>
+  `;
 }
 
-/* Clipboard API를 못 쓰는 구형 브라우저를 위한 대체 복사 방식 */
-function fallbackCopy(text, onDone){
-  const textarea = document.createElement('textarea');
-  textarea.value = text;
-  textarea.setAttribute('readonly', '');
-  textarea.style.position = 'fixed';
-  textarea.style.opacity = '0';
-  document.body.appendChild(textarea);
-  textarea.select();
-  try { document.execCommand('copy'); } catch(e) {}
-  document.body.removeChild(textarea);
-  if(onDone) onDone();
-}
+/* ---------- 필터 버튼 ---------- */
+function renderFilter(){
+  const filterBar = $('filter-bar');
+  if(!filterBar) return;
 
-function renderCreatorLinks(){
-  const root = document.getElementById('creator-links');
-  if(!root) return;
+  /* PROJECTS에 실제로 존재하는 상태만 버튼으로 만듭니다 */
+  const usedStatuses = [...new Set(PROJECTS.map(p => p.status))];
 
-  root.innerHTML = CREATOR_LINKS.map((item, idx) => {
-    const knownIcon = LINK_ICONS[item.icon];
-    const iconSvg = knownIcon || LINK_ICONS.link;
-    /* LINK_ICONS에 없는 이름이면 data-remote-icon을 붙여, 아래에서 lucide.dev로 채워 넣습니다 */
-    const remoteAttr = knownIcon ? '' : ` data-remote-icon="${escapeHtml(item.icon || '')}"`;
-    const svgHtml = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"${remoteAttr}>${iconSvg}</svg>`;
+  const allBtn = `<button class="filter-btn active" data-filter="all" type="button" aria-pressed="true">전체 <span class="filter-count">${PROJECTS.length}</span></button>`;
 
-    if(item.type === 'email'){
-      /* 이메일은 <a href="mailto:">가 아니라 버튼으로 만들어, 클릭 시 클립보드에 복사합니다 */
-      return `<button type="button" class="creator-link-btn" data-email-idx="${idx}" aria-label="${escapeHtml(item.label)} 주소 복사하기">
-          ${svgHtml}
-          <span class="creator-link-label">${escapeHtml(item.label)}</span>
-        </button>`;
-    }
-
-    const isExternal = /^https?:/.test(item.url);
-    const targetAttrs = isExternal ? ' target="_blank" rel="noopener noreferrer"' : '';
-    return `<a href="${safeLinkUrl(item.url)}"${targetAttrs}>
-        ${svgHtml}
-        <span class="creator-link-label">${escapeHtml(item.label)}</span>
-      </a>`;
+  const statusBtns = usedStatuses.map(s => {
+    const info  = getStatusInfo(s);
+    const count = PROJECTS.filter(p => p.status === s).length;
+    return `<button class="filter-btn" data-filter="${escapeHtml(s)}" type="button" aria-pressed="false"><span class="filter-dot" style="background:${info.color}"></span>${escapeHtml(info.label)} <span class="filter-count">${count}</span></button>`;
   }).join('');
 
-  enhanceRemoteIcons(root); // LINK_ICONS에 없는 아이콘 이름은 여기서 lucide.dev로 채워집니다
-
-  /* 이메일 버튼 클릭 이벤트 (이벤트 위임) */
-  root.addEventListener('click', e => {
-    const btn = e.target.closest('[data-email-idx]');
-    if(!btn) return;
-    const item = CREATOR_LINKS[Number(btn.dataset.emailIdx)];
-    if(!item || item.type !== 'email') return;
-    copyEmailToClipboard(decodeEmail(item.emailReversed), btn);
-  });
+  filterBar.innerHTML = allBtn + statusBtns;
 }
 
-/* ============================================================
-   검색창 동작 방식
-   ------------------------------------------------------------
-   입력한 검색어를 프로젝트의 제목(title) / 설명(desc) / 기술스택(tags)에서
-   찾아서, 하나라도 일치하면 카드를 보여줍니다. 대소문자는 구분하지 않습니다.
-   상태 필터(currentFilter)와 함께 적용되므로, 필터로 걸러진 상태 안에서
-   다시 검색어로 좁혀지는 방식입니다.
-============================================================ */
-let currentSearch = '';
-let projectsByTitle = new Map(); // renderAll()에서 매번 새로 채워집니다 (제목→프로젝트)
+function setFilter(filter){
+  currentFilter = filter;
+  document.querySelectorAll('#filter-bar .filter-btn').forEach(btn => {
+    const isActive = btn.dataset.filter === filter;
+    btn.classList.toggle('active', isActive);
+    btn.setAttribute('aria-pressed', String(isActive));
+  });
+  /* 상태 필터만 바꾸는 게 아니라, 현재 검색어(currentSearch)도 함께 반영합니다 */
+  applyCatalogFilters();
+}
 
+/* ---------- 검색 ----------
+   입력한 검색어를 프로젝트의 제목(title) / 설명(desc) / 기술스택(tags)에서 찾아서,
+   하나라도 일치하면 카드를 보여줍니다. 대소문자는 구분하지 않습니다.
+   상태 필터(currentFilter)와 함께 적용되므로, 필터로 걸러진 상태 안에서
+   다시 검색어로 좁혀지는 방식입니다. */
 function projectMatchesSearch(p, query){
   if(!query) return true;
   const haystack = [p.title, p.desc, ...(p.tags || [])].join(' ').toLowerCase();
@@ -1186,21 +1274,11 @@ function applyCatalogFilters(){
     if(visible) visibleCount++;
   });
 
-  const emptyEl = document.getElementById('catalog-empty');
+  const emptyEl = $('catalog-empty');
   if(emptyEl) emptyEl.classList.toggle('visible', visibleCount === 0);
 }
 
-function initSearch(){
-  const input = document.getElementById('search-input');
-  if(!input) return;
-  input.addEventListener('input', () => {
-    currentSearch = input.value;
-    applyCatalogFilters();
-  });
-}
-
 /* ---------- 정렬 ---------- */
-let currentSort = 'manual';
 
 /* updatedAt이 없는 프로젝트는 정렬 방향과 무관하게 항상 맨 뒤로 보냅니다 */
 function compareUpdatedAt(a, b, dir){
@@ -1210,9 +1288,8 @@ function compareUpdatedAt(a, b, dir){
   return dir === 'asc' ? a.updatedAt.localeCompare(b.updatedAt) : b.updatedAt.localeCompare(a.updatedAt);
 }
 
-/* 사이트 화면 정렬과 admin 일괄 정렬이 같은 로직을 씁니다.
-   statusOrderMap: { 상태key: 순서숫자 } — 어느 상태 목록(저장된 STATUS_CONFIG 또는
-   admin에서 아직 편집 중인 목록) 기준으로 정렬할지 호출하는 쪽에서 넘겨줍니다. */
+/* 사이트 화면 정렬과 관리자 일괄 정렬이 같은 로직을 씁니다.
+   statusOrderMap: { 상태key: 순서숫자 } */
 function sortProjectsList(list, sortKey, statusOrderMap){
   const arr = list.slice();
   switch(sortKey){
@@ -1223,11 +1300,7 @@ function sortProjectsList(list, sortKey, statusOrderMap){
     case 'title-asc':
       return arr.sort((a, b) => (a.title || '').localeCompare(b.title || '', 'ko'));
     case 'status':
-      return arr.sort((a, b) => {
-        const oa = statusOrderMap[a.status] ?? 999;
-        const ob = statusOrderMap[b.status] ?? 999;
-        return oa - ob;
-      });
+      return arr.sort((a, b) => (statusOrderMap[a.status] ?? 999) - (statusOrderMap[b.status] ?? 999));
     case 'manual':
     default:
       return arr;
@@ -1244,468 +1317,317 @@ function getSortedProjects(){
   return sortProjectsList(PROJECTS, currentSort, buildStatusOrderMap()); // 원본 PROJECTS는 건드리지 않습니다
 }
 
-function initSort(){
-  const select = document.getElementById('sort-select');
-  if(!select) return;
-  select.value = currentSort;
-  select.addEventListener('change', () => {
-    currentSort = select.value;
-    renderAll();
-  });
-}
-
-/* ---------- 유틸 함수 ---------- */
-
-function escapeHtml(str){
-  const div = document.createElement("div");
-  div.textContent = str;
-  return div.innerHTML;
-}
-
-/* XSS 방지: http / https 외의 프로토콜(javascript: 등)을 차단합니다 */
-function safeUrl(url){
-  try {
-    const parsed = new URL(url);
-    if(parsed.protocol === 'https:' || parsed.protocol === 'http:') return url;
-  } catch(e) {}
-  return '#';
-}
-
-/* link가 없을 때 상태에 맞는 대체 텍스트를 반환합니다 */
-function getNoLinkLabel(status){
-  const map = {
-    private:     '비공개',
-    wip:         '준비 중',
-    hold:        '보류',
-    stop:        '중단',
-    unsupported: '미지원',
-    maintenance: '점검 중',
-    review:      '검토 중',
-  };
-  return map[status] || '—';
-}
-
-/* 링크 도메인에 맞는 라벨을 반환합니다 (GitHub이 아닌 링크도 대비) */
-function getLinkLabel(url){
-  try {
-    const host = new URL(url).hostname.replace(/^www\./, '');
-    if(host.includes('github.com')) return 'GitHub ↗';
-    return '자세히 보기 ↗';
-  } catch(e){
-    return '자세히 보기 ↗';
-  }
-}
-
-/* ---------- 카드 렌더링 ---------- */
-function renderCard(p){
-  const statusInfo = STATUS_CONFIG[p.status] || STATUS_CONFIG.wip;
-  const tags   = (p.tags     || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('');
-  const feats  = (p.features || []).map(f => `<li>${escapeHtml(f)}</li>`).join('');
-  const knownIcon = ICONS[p.icon];
-  const iconSvg = knownIcon || ICONS.folder;
-  /* ICONS에 없는 이름이면 lucide.dev 좌표계(24x24)에 맞추고, data-remote-icon을 붙여
-     아래 enhanceRemoteIcons()가 실제 아이콘으로 채워 넣도록 표시해둡니다 */
-  const iconViewBox = knownIcon ? '0 0 22 22' : '0 0 24 24';
-  const remoteAttr = knownIcon ? '' : ` data-remote-icon="${escapeHtml(p.icon || '')}"`;
-  /* 링크는 최대 2개까지 지원합니다. 두 번째 링크(link2)는 라벨(link2Label)을
-     직접 입력할 수 있고, 비워두면 첫 번째 링크처럼 자동으로 라벨이 붙습니다. */
-  const link1Html = p.link
-    ? `<a href="${safeUrl(p.link)}" target="_blank" rel="noopener noreferrer" aria-label="${escapeHtml(p.title)} 관련 링크 열기 (새 창)">${getLinkLabel(p.link)}</a>`
-    : '';
-  const link2Label = (p.link2Label || '').trim() || getLinkLabel(p.link2 || '');
-  const link2Html = p.link2
-    ? `<a href="${safeUrl(p.link2)}" target="_blank" rel="noopener noreferrer" aria-label="${escapeHtml(p.title)} 관련 링크 2 열기 (새 창)">${escapeHtml(link2Label)}</a>`
-    : '';
-  const linkHtml = (link1Html || link2Html)
-    ? `<span class="card-links">${link1Html}${link2Html}</span>`
-    : `<span>${escapeHtml(getNoLinkLabel(p.status))}</span>`;
-
-  return `
-    <article class="card" data-status="${escapeHtml(p.status)}" data-title="${escapeHtml(p.title || '')}">
-      <div class="card-top">
-        <span class="status" style="--dot:${statusInfo.color}">${escapeHtml(statusInfo.label)}</span>
-        <span class="model">${escapeHtml(p.model || '')}</span>
-      </div>
-      <div class="icon-wrap">
-        <svg width="22" height="22" viewBox="${iconViewBox}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"${remoteAttr}>${iconSvg}</svg>
-      </div>
-      <h3>${escapeHtml(p.title || '')}</h3>
-      <p class="desc">${escapeHtml(p.desc || '')}</p>
-      <div class="tags">${tags}</div>
-      <ul class="feat">${feats}</ul>
-      <div class="card-foot">
-        <span>${escapeHtml(p.platform || '')}</span>
-        ${linkHtml}
-      </div>
-    </article>
-  `;
-}
-
-/* ---------- 필터 버튼 렌더링 ---------- */
-let currentFilter = 'all';
-
-function renderFilter(){
-  const filterBar = document.getElementById('filter-bar');
-  if(!filterBar) return;
-
-  /* PROJECTS에 실제로 존재하는 상태만 버튼으로 만듭니다 */
-  const usedStatuses = [...new Set(PROJECTS.map(p => p.status))];
-
-  const allBtn = `<button class="filter-btn active" data-filter="all" type="button" aria-pressed="true">전체 <span class="filter-count">${PROJECTS.length}</span></button>`;
-
-  const statusBtns = usedStatuses.map(s => {
-    const info  = STATUS_CONFIG[s] || STATUS_CONFIG.wip;
-    const count = PROJECTS.filter(p => p.status === s).length;
-    return `<button class="filter-btn" data-filter="${escapeHtml(s)}" type="button" aria-pressed="false"><span class="filter-dot" style="background:${info.color}"></span>${escapeHtml(info.label)} <span class="filter-count">${count}</span></button>`;
-  }).join('');
-
-  filterBar.innerHTML = allBtn + statusBtns;
-}
-
-/* 이벤트 위임: 버튼마다 개별 등록하지 않고, filterBar 자체에도 한 번만 등록합니다.
-   (renderFilter는 renderAll이 호출될 때마다 다시 실행되는데, 예전에는 이 리스너를
-   renderFilter 안에서 매번 추가해서 재렌더링할수록 같은 클릭에 여러 번 반응하는
-   누적 버그가 있었습니다 — 여기로 한 번만 등록하도록 분리했습니다) */
-function bindFilterBarEvents(){
-  const filterBar = document.getElementById('filter-bar');
-  if(!filterBar) return;
-  filterBar.addEventListener('click', e => {
-    const btn = e.target.closest('.filter-btn');
-    if(!btn) return;
-    setFilter(btn.dataset.filter);
-  });
-}
-
-function setFilter(filter){
-  currentFilter = filter;
-  document.querySelectorAll('#filter-bar .filter-btn').forEach(btn => {
-    const isActive = btn.dataset.filter === filter;
-    btn.classList.toggle('active', isActive);
-    btn.setAttribute('aria-pressed', String(isActive));
-  });
-  /* 상태 필터만 바꾸는 게 아니라, 현재 검색어(currentSearch)도 함께 반영해서 보여줍니다 */
-  applyCatalogFilters();
-}
-
 /* ---------- 전체 렌더링 ---------- */
-function renderAll(){
-  const root = document.getElementById('catalog');
 
-  const sorted = getSortedProjects();
-
-  /* 제목→프로젝트 매핑을 미리 만들어둡니다. applyCatalogFilters가 검색할 때마다
-     (키 입력할 때마다) 카드 개수만큼 PROJECTS.find()로 훑는 대신 이 맵에서
-     바로 찾도록 해서, 검색 입력 시 매번 반복 탐색하는 비용을 없앱니다. */
-  projectsByTitle = new Map(sorted.map(p => [p.title, p]));
-
-  root.innerHTML = sorted.map(renderCard).join('');
-  enhanceRemoteIcons(root); // ICONS에 없는 아이콘 이름은 여기서 lucide.dev로 채워집니다
-
-  /* 히어로 상태 요약 */
+/* 히어로 영역: 전체 개수 / 상태별 개수 / 가장 최근 업데이트 */
+function renderHeroMeta(){
   const counts = {};
   PROJECTS.forEach(p => {
     const key = STATUS_CONFIG[p.status] ? p.status : 'wip';
     counts[key] = (counts[key] || 0) + 1;
   });
   const statusText = Object.keys(counts)
-    .map(key => `${STATUS_CONFIG[key].label} ${counts[key]}`)
+    .map(key => `${getStatusInfo(key).label} ${counts[key]}`)
     .join(' · ');
 
-  const totalEl   = document.getElementById('meta-total');
-  const statusEl  = document.getElementById('meta-status');
-  const updatedEl = document.getElementById('meta-updated');
-  if(totalEl)   totalEl.textContent  = `${PROJECTS.length}개 프로젝트`;
-  if(statusEl)  statusEl.textContent = statusText;
-  if(updatedEl){
-    /* 접속 시점의 날짜가 아니라, 프로젝트들의 updatedAt 중 가장 최신 값을 보여줍니다.
-       updatedAt이 없는 프로젝트는 무시하고, 하나도 없으면 '—'로 표시합니다.
-       "YYYY-MM"과 "YYYY-MM-DD"가 섞여 있어도 문자열 정렬로 올바르게 비교됩니다. */
-    const dates = PROJECTS.map(p => p.updatedAt).filter(Boolean).sort();
-    const latest = dates.length ? dates[dates.length - 1] : null;
-    /* "2026-08" → "2026.08", "2026-08-15" → "2026.08.15" (하이픈 전부를 점으로 변환) */
-    updatedEl.textContent = latest ? latest.replace(/-/g, '.') : '—';
-  }
+  /* 접속 시점의 날짜가 아니라, 프로젝트들의 updatedAt 중 가장 최신 값을 보여줍니다.
+     updatedAt이 없는 프로젝트는 무시하고, 하나도 없으면 '—'로 표시합니다.
+     "YYYY-MM"과 "YYYY-MM-DD"가 섞여 있어도 문자열 정렬로 올바르게 비교됩니다. */
+  const dates = PROJECTS.map(p => p.updatedAt).filter(Boolean).sort();
+  const latest = dates.length ? dates[dates.length - 1] : null;
 
+  const setText = (id, text) => { const el = $(id); if(el) el.textContent = text; };
+  setText('meta-total', `${PROJECTS.length}개 프로젝트`);
+  setText('meta-status', statusText);
+  /* "2026-08" → "2026.08", "2026-08-15" → "2026.08.15" */
+  setText('meta-updated', latest ? latest.replace(/-/g, '.') : '—');
+}
+
+function renderAll(){
+  const root = $('catalog');
+  const sorted = getSortedProjects();
+
+  /* 제목→프로젝트 매핑을 미리 만들어둡니다. applyCatalogFilters가 키를 입력할 때마다
+     카드 수만큼 배열을 훑는 대신 이 맵에서 바로 찾도록 하기 위함입니다. */
+  projectsByTitle = new Map(sorted.map(p => [p.title, p]));
+
+  root.innerHTML = sorted.map(renderCard).join('');
+  enhanceRemoteIcons(root); // ICONS에 없는 아이콘 이름은 여기서 lucide.dev로 채워집니다
+
+  renderHeroMeta();
   renderFilter();
 
-  /* 카탈로그를 정렬된 순서로 다시 그렸으므로, 현재 활성화된 필터를 재적용합니다 */
+  /* 카탈로그를 다시 그렸으므로, 현재 활성화된 필터를 재적용합니다 */
   setFilter(currentFilter);
 }
 
-/* ============================================================
-   관리자 도구 (ADMIN)
-   ------------------------------------------------------------
-   코드를 직접 열어서 PROJECTS 배열을 고치는 대신, ADMIN 화면에서
-   프로젝트를 추가/수정/삭제한 뒤 [GitHub에 저장하고 배포] 버튼을
-   누르면 GitHub Contents API로 이 파일 안의 PROJECTS 영역 표시
-   (PROJECTS_DATA_START ~ PROJECTS_DATA_END 마커) 구간만 찾아서
-   자동으로 교체하고, 그 자리에서 바로 커밋합니다.
-   커밋되면 GitHub Pages가 알아서 다시 배포하므로, 몇십 초 뒤
-   실제 사이트에도 반영됩니다. (버튼 클릭 → 편집 → GitHub 저장까지
-   전부 이 화면 안에서 끝나고, 로컬에서 파일을 내려받거나 다시
-   업로드하는 과정이 필요 없습니다)
-============================================================ */
-const ADMIN_CONFIG_KEY = 'admin-github-config';
-let adminProjects = null; // ADMIN 화면에서 편집 중인 프로젝트 목록 (PROJECTS의 복사본)
-let adminStatuses = null; // ADMIN 화면에서 편집 중인 상태 목록 (STATUS_CONFIG의 복사본, 배열 형태)
-
-function loadAdminConfig(){
-  try{ return JSON.parse(localStorage.getItem(ADMIN_CONFIG_KEY) || '{}'); }
-  catch(e){ return {}; }
-}
-
-async function fillAdminConfigForm(){
-  const cfg = loadAdminConfig();
-  const map = { 'gh-owner':'owner', 'gh-repo':'repo', 'gh-branch':'branch', 'gh-path':'path' };
-  Object.keys(map).forEach(id => {
-    const el = document.getElementById(id);
-    if(el) el.value = cfg[map[id]] || el.value || (id === 'gh-branch' ? 'main' : id === 'gh-path' ? 'index.html' : '');
+/* 검색창 / 정렬 드롭다운 / 필터바 이벤트 — 페이지 시작 시 한 번만 연결합니다.
+   (필터바는 이벤트 위임을 쓰므로, 버튼이 다시 그려져도 리스너가 쌓이지 않습니다) */
+function bindCatalogEvents(){
+  const searchInput = $('search-input');
+  if(searchInput) searchInput.addEventListener('input', () => {
+    currentSearch = searchInput.value;
+    applyCatalogFilters();
   });
 
-  /* 토큰 입력칸에 이미 값이 있으면(방금 손으로 입력했거나 이전에 자동으로
-     채워진 경우) 그대로 둡니다 — 화면을 왔다 갔다 할 때마다 지워지면
-     "저장" 버튼을 누르기 전에 입력한 토큰이 계속 날아가서 불편하기 때문입니다.
-     칸이 비어있을 때만, 저장해둔 값이 있으면 복호화해서 채워 넣습니다. */
-  const tokenEl = document.getElementById('gh-token');
-  if(tokenEl && !tokenEl.value && cfg.tokenEnc && adminSessionPassword){
-    try{ tokenEl.value = await decryptWithPassword(cfg.tokenEnc, adminSessionPassword); }
-    catch(e){ setAdminLog('저장된 토큰을 불러오지 못했습니다. 다시 입력하고 저장해주세요.', 'error'); }
+  const sortSelect = $('sort-select');
+  if(sortSelect){
+    sortSelect.value = currentSort;
+    sortSelect.addEventListener('change', () => {
+      currentSort = sortSelect.value;
+      renderAll();
+    });
+  }
+
+  on('filter-bar', 'click', e => {
+    const btn = e.target.closest('.filter-btn');
+    if(btn) setFilter(btn.dataset.filter);
+  });
+}
+
+
+/* ============================================================
+   5. 제작자 정보 — 링크 버튼, 이메일 복사
+============================================================ */
+
+/* 허용 프로토콜: http(s), tel. (mailto:는 쓰지 않습니다 — 이메일은 클립보드 복사 방식) */
+const CREATOR_LINK_PROTOCOLS = ['http:', 'https:', 'tel:'];
+
+/* 뒤집어 저장해둔 이메일 문자열을 원래대로 되돌립니다 */
+const decodeEmail = reversed => reversed.split('').reverse().join('');
+
+/* Clipboard API를 못 쓰는 구형 브라우저를 위한 대체 복사 방식 */
+function fallbackCopy(text){
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.setAttribute('readonly', '');
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  textarea.select();
+  try { document.execCommand('copy'); } catch(e) {}
+  document.body.removeChild(textarea);
+}
+
+/* 버튼 라벨을 잠깐 "복사됨!"으로 바꿨다가 되돌립니다.
+   원래 라벨은 처음 한 번만 저장해서, 빠르게 여러 번 눌러도 "복사됨!"으로 굳지 않습니다. */
+function showCopiedFeedback(btnEl){
+  const labelEl = btnEl.querySelector('.creator-link-label');
+  if(!labelEl) return;
+  if(btnEl._originalLabel === undefined) btnEl._originalLabel = labelEl.textContent;
+
+  labelEl.textContent = '복사됨!';
+  btnEl.classList.add('copied');
+  window.clearTimeout(btnEl._copyResetTimer);
+  btnEl._copyResetTimer = window.setTimeout(() => {
+    labelEl.textContent = btnEl._originalLabel;
+    btnEl.classList.remove('copied');
+  }, 1600);
+}
+
+function copyEmailToClipboard(email, btnEl){
+  const done = () => showCopiedFeedback(btnEl);
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(email).then(done).catch(() => { fallbackCopy(email); done(); });
+  } else {
+    fallbackCopy(email);
+    done();
   }
 }
 
+function renderCreatorLinks(){
+  const root = $('creator-links');
+  if(!root) return;
+
+  root.innerHTML = CREATOR_LINKS.map((item, idx) => {
+    const knownIcon = LINK_ICONS[item.icon];
+    const iconSvg = knownIcon || LINK_ICONS.link;
+    /* LINK_ICONS에 없는 이름이면 data-remote-icon을 붙여, 나중에 lucide.dev로 채워 넣습니다 */
+    const remoteAttr = knownIcon ? '' : ` data-remote-icon="${escapeHtml(item.icon || '')}"`;
+    const svgHtml = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"${remoteAttr}>${iconSvg}</svg>`;
+
+    if(item.type === 'email'){
+      /* 이메일은 <a href="mailto:">가 아니라 버튼으로 만들어, 클릭 시 클립보드에 복사합니다 */
+      return `<button type="button" class="creator-link-btn" data-email-idx="${idx}" aria-label="${escapeHtml(item.label)} 주소 복사하기">
+          ${svgHtml}
+          <span class="creator-link-label">${escapeHtml(item.label)}</span>
+        </button>`;
+    }
+
+    const isExternal = /^https?:/.test(item.url);
+    const targetAttrs = isExternal ? ' target="_blank" rel="noopener noreferrer"' : '';
+    return `<a href="${safeUrl(item.url, CREATOR_LINK_PROTOCOLS)}"${targetAttrs}>
+        ${svgHtml}
+        <span class="creator-link-label">${escapeHtml(item.label)}</span>
+      </a>`;
+  }).join('');
+
+  enhanceRemoteIcons(root); // LINK_ICONS에 없는 아이콘 이름은 여기서 lucide.dev로 채워집니다
+}
+
+/* 이메일 버튼 클릭 (이벤트 위임 — 페이지 시작 시 한 번만 연결) */
+function bindCreatorLinkEvents(){
+  on('creator-links', 'click', e => {
+    const btn = e.target.closest('[data-email-idx]');
+    if(!btn) return;
+    const item = CREATOR_LINKS[Number(btn.dataset.emailIdx)];
+    if(!item || item.type !== 'email') return;
+    copyEmailToClipboard(decodeEmail(item.emailReversed), btn);
+  });
+}
+
+
+/* ============================================================
+   6. 관리자 도구 (ADMIN)
+   ------------------------------------------------------------
+   코드를 직접 열어서 PROJECTS 배열을 고치는 대신, ADMIN 화면에서 프로젝트를
+   추가/수정/삭제한 뒤 [GitHub에 저장하고 배포] 버튼을 누르면 GitHub Contents
+   API로 이 파일 안의 PROJECTS 영역(PROJECTS_DATA_START ~ PROJECTS_DATA_END
+   마커 사이)만 찾아서 자동으로 교체하고, 그 자리에서 바로 커밋합니다.
+   커밋되면 GitHub Pages가 알아서 다시 배포하므로, 몇십 초 뒤 실제 사이트에도
+   반영됩니다. (로컬에서 파일을 내려받거나 다시 업로드할 필요가 없습니다)
+============================================================ */
+
+/* 비밀번호 원문은 이 파일 어디에도 없습니다. 아래는 그 SHA-256 해시값만 저장해뒀고,
+   맞는 비밀번호를 입력했을 때만 통과됩니다. 비밀번호를 바꾸고 싶다면 새 비밀번호의
+   SHA-256 해시를 구해서 이 상수만 교체하면 됩니다. */
+const ADMIN_PASS_HASH = 'b4f9ffa70ae677cdc2be4ee64e612a239221bc99f3be6ddb45bce0ba5bb76af1';
+
+const ADMIN_CONFIG_KEY   = 'admin-github-config';
+const LOGIN_ATTEMPTS_KEY = 'admin-login-attempts';
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCKOUT_MS = 5 * 60 * 1000;
+
+/* GitHub 연결 정보 입력칸(id)과 기본값 */
+const GH_FIELD_IDS = { owner:'gh-owner', repo:'gh-repo', branch:'gh-branch', path:'gh-path', token:'gh-token' };
+const GH_DEFAULTS  = { branch:'main', path:'index.html' };
+
+/* 프로젝트 한 개의 필드 목록과 기본값. 저장할 때 이 순서대로 코드가 만들어집니다. */
+const PROJECT_DEFAULTS = {
+  status:'wip', model:'', icon:'folder', title:'', desc:'', tags:[], features:[],
+  platform:'', link:'', link2:'', link2Label:'', updatedAt:'',
+};
+
+/* PROJECTS 영역의 시작/끝 표시. 이 파일 안에서 스스로를 찾아버리지 않도록
+   일부러 두 조각으로 나눠 씁니다. (이 문자열이 통째로 두 번 나오면 저장 위치가 어긋납니다) */
+const PROJECTS_MARKER_START = '/* PROJECTS_DATA_' + 'START */';
+const PROJECTS_MARKER_END   = '/* PROJECTS_DATA_' + 'END */';
+
+let adminProjects = null;           // 관리자 화면에서 편집 중인 프로젝트 목록 (PROJECTS의 복사본)
+const adminExpanded = new Set();    // 상세가 펼쳐져 있는 프로젝트 객체들 (순서를 바꾸거나 다시 그려도 펼침 상태 유지)
+
+/* 잠금 해제 여부는 sessionStorage가 아니라 이 변수(메모리)로만 관리합니다.
+   페이지를 새로고침하면 항상 다시 잠기고, 비밀번호를 다시 입력해야 합니다.
+   (아래 토큰 암호화가 비밀번호 원문을 필요로 하는데, 원문은 절대 어디에도
+   저장하지 않고 이 세션의 메모리에만 잠깐 들고 있기 때문입니다.) */
+let adminUnlocked = false;
+let adminSessionPassword = null;
+
+function readStoredJson(key){
+  try{ return JSON.parse(localStorage.getItem(key) || '{}'); }
+  catch(e){ return {}; }
+}
+
 function setAdminLog(message, type){
-  const el = document.getElementById('admin-log');
+  const el = $('admin-log');
   if(!el) return;
   el.textContent = message || '';
   el.classList.remove('is-error', 'is-success');
   if(type) el.classList.add(type === 'error' ? 'is-error' : 'is-success');
 }
 
-function emptyAdminProject(){
-  return { status:'wip', model:'', icon:'folder', title:'', desc:'', tags:[], features:[], platform:'', link:'', link2:'', link2Label:'', updatedAt:'' };
+function setAdminGateError(msg){
+  const el = $('admin-gate-error');
+  if(el) el.textContent = msg || '';
 }
 
-/* STATUS_CONFIG(객체)를 화면에서 순서를 바꾸며 편집하기 쉽도록 배열로 변환합니다 */
-function statusConfigToList(config){
-  return Object.keys(config)
-    .sort((a, b) => (config[a].order ?? 0) - (config[b].order ?? 0))
-    .map(key => ({ key, label: config[key].label || '', color: config[key].color || '#71717A' }));
-}
-
-function emptyAdminStatus(){
-  return { key: '', label: '', color: '#71717A' };
-}
-
-/* 상태 key가 지금 프로젝트 목록에서 실제로 쓰이고 있는지 확인합니다 (삭제 시 경고용) */
-function statusKeyInUse(key){
-  return (adminProjects || []).some(p => p.status === key);
-}
-
-function renderAdminStatusList(){
-  const root = document.getElementById('admin-status-list');
-  if(!root || !adminStatuses) return;
-
-  root.innerHTML = adminStatuses.map((s, idx) => `
-    <div class="admin-project-card" data-idx="${idx}">
-      <div class="admin-project-card-head">
-        <span>#${idx + 1}${s.label ? ' · ' + escapeHtml(s.label) : ''}</span>
-        <div class="admin-project-card-actions">
-          <button type="button" class="admin-move-up" ${idx === 0 ? 'disabled' : ''}>▲ 위로</button>
-          <button type="button" class="admin-move-down" ${idx === adminStatuses.length - 1 ? 'disabled' : ''}>▼ 아래로</button>
-          <button type="button" class="admin-remove-status">삭제</button>
-        </div>
-      </div>
-      <div class="admin-grid">
-        <label class="admin-field"><span>key (영문/숫자, 프로젝트가 이 값으로 상태를 지정함)</span><input type="text" data-field="key" value="${escapeHtml(s.key || '')}" placeholder="예: testing"></label>
-        <label class="admin-field"><span>화면에 보일 이름</span><input type="text" data-field="label" value="${escapeHtml(s.label || '')}" placeholder="예: 테스트중"></label>
-        <label class="admin-field"><span>색상</span><input type="color" data-field="color" value="${escapeHtml(s.color || '#71717A')}"></label>
-      </div>
-    </div>
-  `).join('');
-}
-
-/* 입력칸이 바뀔 때마다 adminStatuses 배열에 즉시 반영 */
-function bindAdminStatusListEvents(){
-  const root = document.getElementById('admin-status-list');
-  if(!root) return;
-
-  root.addEventListener('input', e => {
-    const field = e.target.dataset.field;
-    if(!field) return;
-    const card = e.target.closest('.admin-project-card');
-    const idx = Number(card.dataset.idx);
-    const s = adminStatuses[idx];
-    s[field] = field === 'key' ? e.target.value.trim() : e.target.value;
-    if(field === 'label' || field === 'key'){
-      const head = card.querySelector('.admin-project-card-head span');
-      if(head) head.textContent = `#${idx + 1}${s.label ? ' · ' + s.label : ''}`;
-    }
-  });
-
-  root.addEventListener('click', e => {
-    const card = e.target.closest('.admin-project-card');
-    if(!card) return;
-    const idx = Number(card.dataset.idx);
-
-    if(e.target.closest('.admin-remove-status')){
-      const s = adminStatuses[idx];
-      const usedCount = (adminProjects || []).filter(p => p.status === s.key).length;
-      const warn = usedCount > 0
-        ? `이 상태를 쓰는 프로젝트가 ${usedCount}개 있습니다. 삭제하면 해당 프로젝트들은 기본(제작중) 스타일로 표시됩니다. 그래도 삭제할까요?`
-        : '이 상태를 목록에서 삭제할까요? (GitHub에 저장하기 전까지는 취소할 수 있습니다)';
-      if(!confirm(warn)) return;
-      adminStatuses.splice(idx, 1);
-      renderAdminStatusList();
-      renderAdminProjectList();
-    } else if(e.target.closest('.admin-move-up') && idx > 0){
-      [adminStatuses[idx - 1], adminStatuses[idx]] = [adminStatuses[idx], adminStatuses[idx - 1]];
-      renderAdminStatusList();
-    } else if(e.target.closest('.admin-move-down') && idx < adminStatuses.length - 1){
-      [adminStatuses[idx + 1], adminStatuses[idx]] = [adminStatuses[idx], adminStatuses[idx + 1]];
-      renderAdminStatusList();
-    }
-  });
-}
-
-function renderAdminProjectList(){
-  const root = document.getElementById('admin-project-list');
-  if(!root || !adminProjects) return;
-
-  const statusSource = adminStatuses && adminStatuses.length ? adminStatuses : statusConfigToList(STATUS_CONFIG);
-  const statusOptions = statusSource
-    .map(s => `<option value="${escapeHtml(s.key)}">${escapeHtml(s.label)} (${escapeHtml(s.key)})</option>`)
-    .join('');
-
-  root.innerHTML = adminProjects.map((p, idx) => `
-    <div class="admin-project-card" data-idx="${idx}">
-      <div class="admin-project-card-head">
-        <span>#${idx + 1}${p.title ? ' · ' + escapeHtml(p.title) : ''}</span>
-        <div class="admin-project-card-actions">
-          <button type="button" class="admin-move-up" ${idx === 0 ? 'disabled' : ''}>▲ 위로</button>
-          <button type="button" class="admin-move-down" ${idx === adminProjects.length - 1 ? 'disabled' : ''}>▼ 아래로</button>
-          <button type="button" class="admin-remove-project">삭제</button>
-        </div>
-      </div>
-      <div class="admin-grid">
-        <label class="admin-field"><span>제목</span><input type="text" data-field="title" value="${escapeHtml(p.title || '')}"></label>
-        <label class="admin-field"><span>상태</span><select data-field="status">${statusOptions}</select></label>
-        <label class="admin-field"><span>버전(model)</span><input type="text" data-field="model" value="${escapeHtml(p.model || '')}"></label>
-        <label class="admin-field"><span>아이콘 이름</span><input type="text" data-field="icon" value="${escapeHtml(p.icon || '')}" placeholder="folder, rocket 등"></label>
-        <label class="admin-field"><span>플랫폼</span><input type="text" data-field="platform" value="${escapeHtml(p.platform || '')}"></label>
-        <label class="admin-field"><span>최근 업데이트</span><input type="text" data-field="updatedAt" value="${escapeHtml(p.updatedAt || '')}" placeholder="2026-08"></label>
-      </div>
-      <label class="admin-field"><span>설명</span><textarea data-field="desc">${escapeHtml(p.desc || '')}</textarea></label>
-      <label class="admin-field"><span>링크1 (없으면 비워두기)</span><input type="text" data-field="link" value="${escapeHtml(p.link || '')}" placeholder="https://..."></label>
-      <div class="admin-grid">
-        <label class="admin-field"><span>링크2 URL (없으면 비워두기)</span><input type="text" data-field="link2" value="${escapeHtml(p.link2 || '')}" placeholder="https://..."></label>
-        <label class="admin-field"><span>링크2 표시 이름</span><input type="text" data-field="link2Label" value="${escapeHtml(p.link2Label || '')}" placeholder="예: 웹사이트 (비우면 자동)"></label>
-      </div>
-      <label class="admin-field"><span>기술 스택 (쉼표로 구분)</span><input type="text" data-field="tags" value="${escapeHtml((p.tags || []).join(', '))}"></label>
-      <label class="admin-field"><span>특징 (한 줄에 하나씩)</span><textarea data-field="features">${escapeHtml((p.features || []).join('\n'))}</textarea></label>
-    </div>
-  `).join('');
-
-  /* innerHTML 문자열로는 <select>의 선택값(selected)을 넣기 까다로워, 렌더링 후 따로 지정합니다 */
-  root.querySelectorAll('.admin-project-card').forEach(card => {
-    const idx = Number(card.dataset.idx);
-    const sel = card.querySelector('select[data-field="status"]');
-    if(sel) sel.value = adminProjects[idx].status || 'wip';
-  });
-}
-
-/* 입력칸이 바뀔 때마다 adminProjects 배열에 즉시 반영 (이벤트 위임: 카드가 새로 그려져도 다시 등록할 필요 없음) */
-function bindAdminProjectListEvents(){
-  const root = document.getElementById('admin-project-list');
-  if(!root) return;
-
-  root.addEventListener('input', e => {
-    const field = e.target.dataset.field;
-    if(!field) return;
-    const card = e.target.closest('.admin-project-card');
-    const idx = Number(card.dataset.idx);
-    const p = adminProjects[idx];
-    if(field === 'tags'){
-      p.tags = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
-    } else if(field === 'features'){
-      p.features = e.target.value.split('\n').map(s => s.trim()).filter(Boolean);
-    } else {
-      p[field] = e.target.value;
-    }
-    if(field === 'title'){
-      const head = card.querySelector('.admin-project-card-head span');
-      if(head) head.textContent = `#${idx + 1}${p.title ? ' · ' + p.title : ''}`;
-    }
-  });
-
-  root.addEventListener('click', e => {
-    const card = e.target.closest('.admin-project-card');
-    if(!card) return;
-    const idx = Number(card.dataset.idx);
-
-    if(e.target.closest('.admin-remove-project')){
-      if(!confirm('이 프로젝트를 목록에서 삭제할까요? (GitHub에 저장하기 전까지는 취소할 수 있습니다)')) return;
-      adminProjects.splice(idx, 1);
-      renderAdminProjectList();
-    } else if(e.target.closest('.admin-move-up') && idx > 0){
-      [adminProjects[idx - 1], adminProjects[idx]] = [adminProjects[idx], adminProjects[idx - 1]];
-      renderAdminProjectList();
-    } else if(e.target.closest('.admin-move-down') && idx < adminProjects.length - 1){
-      [adminProjects[idx + 1], adminProjects[idx]] = [adminProjects[idx], adminProjects[idx + 1]];
-      renderAdminProjectList();
-    }
-  });
-}
-
-/* ---------- 비밀번호 잠금 ----------
-   비밀번호 원문은 이 파일 어디에도 없습니다. 아래는 그 SHA-256 해시값만 저장해뒀고,
-   맞는 비밀번호를 입력했을 때만 통과됩니다. 비밀번호를 바꾸고 싶다면 새 비밀번호의
-   SHA-256 해시를 구해서 이 상수만 교체하면 됩니다. */
-const ADMIN_PASS_HASH = 'b4f9ffa70ae677cdc2be4ee64e612a239221bc99f3be6ddb45bce0ba5bb76af1';
-
-/* 잠금 해제 여부는 sessionStorage가 아니라 이 변수(메모리)로만 관리합니다.
-   페이지를 새로고침하면 항상 다시 잠기고, 비밀번호를 다시 입력해야 합니다.
-   (아래 토큰 암호화 기능이 비밀번호 원문을 필요로 하는데, 원문은 절대
-   어디에도 저장하지 않고 이 세션의 메모리에만 잠깐 들고 있기 때문입니다.) */
-let adminUnlocked = false;
-let adminSessionPassword = null;
+/* ---------- 6-1. 비밀번호 잠금 ---------- */
 
 async function sha256Hex(text){
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-/* ---------- 로그인 시도 제한 (무차별 대입 공격 방어) ----------
-   비밀번호를 5번 연속 틀리면 5분간 잠깁니다. localStorage에 기록해서
-   페이지를 새로고침해도 잠금이 풀리지 않게 합니다. */
-const LOGIN_ATTEMPTS_KEY = 'admin-login-attempts';
-const MAX_LOGIN_ATTEMPTS = 5;
-const LOCKOUT_MS = 5 * 60 * 1000;
+/* 로그인 시도 제한 (무차별 대입 공격 방어): 비밀번호를 5번 연속 틀리면 5분간 잠깁니다.
+   localStorage에 기록해서 페이지를 새로고침해도 잠금이 풀리지 않게 합니다. */
+const getLoginAttempts = () => readStoredJson(LOGIN_ATTEMPTS_KEY);
 
-function getLoginAttempts(){
-  try{ return JSON.parse(localStorage.getItem(LOGIN_ATTEMPTS_KEY) || '{}'); }
-  catch(e){ return {}; }
-}
 function remainingLockoutMs(){
   const { lockedUntil } = getLoginAttempts();
   return lockedUntil ? Math.max(0, lockedUntil - Date.now()) : 0;
 }
 function recordFailedAttempt(){
-  const state = getLoginAttempts();
-  const count = (state.count || 0) + 1;
-  if(count >= MAX_LOGIN_ATTEMPTS){
-    localStorage.setItem(LOGIN_ATTEMPTS_KEY, JSON.stringify({ count: 0, lockedUntil: Date.now() + LOCKOUT_MS }));
-  } else {
-    localStorage.setItem(LOGIN_ATTEMPTS_KEY, JSON.stringify({ count }));
-  }
+  const count = (getLoginAttempts().count || 0) + 1;
+  const state = count >= MAX_LOGIN_ATTEMPTS
+    ? { count: 0, lockedUntil: Date.now() + LOCKOUT_MS }
+    : { count };
+  localStorage.setItem(LOGIN_ATTEMPTS_KEY, JSON.stringify(state));
 }
 function clearLoginAttempts(){
   localStorage.removeItem(LOGIN_ATTEMPTS_KEY);
 }
+const lockoutMessage = ms => `시도 횟수를 초과했습니다. ${Math.ceil(ms / 60000)}분 후 다시 시도해주세요.`;
 
-/* ---------- GitHub 토큰 암호화 (비밀번호 기반) ----------
+async function tryUnlockAdmin(){
+  const lockedMs = remainingLockoutMs();
+  if(lockedMs > 0){
+    setAdminGateError(lockoutMessage(lockedMs));
+    return;
+  }
+
+  const input = $('admin-unlock-pass');
+  const pass = input.value;
+  if(await sha256Hex(pass) === ADMIN_PASS_HASH){
+    clearLoginAttempts();
+    adminUnlocked = true;
+    adminSessionPassword = pass;
+    input.value = '';
+    await updateAdminGate();
+    return;
+  }
+
+  recordFailedAttempt();
+  const nowLockedMs = remainingLockoutMs();
+  setAdminGateError(nowLockedMs > 0
+    ? lockoutMessage(nowLockedMs)
+    : `비밀번호가 올바르지 않습니다. (남은 시도 ${MAX_LOGIN_ATTEMPTS - (getLoginAttempts().count || 0)}회)`);
+}
+
+/* 자리를 비울 때 새로고침 없이 즉시 다시 잠급니다.
+   비밀번호는 메모리에서 지우고, 화면에 남아있던 토큰 입력값도 함께 지웁니다. */
+function lockAdmin(){
+  adminUnlocked = false;
+  adminSessionPassword = null;
+  const tokenEl = $(GH_FIELD_IDS.token);
+  if(tokenEl) tokenEl.value = '';
+  updateAdminGate();
+}
+
+/* 잠금 해제 여부에 따라 게이트(잠금 화면) 또는 실제 관리자 화면을 보여줍니다.
+   ADMIN 화면에 들어올 때마다 호출됩니다 (새로고침하면 항상 다시 잠깁니다). */
+async function updateAdminGate(){
+  const gate = $('admin-gate');
+  const body = $('admin-body');
+  if(!gate || !body) return;
+
+  gate.hidden = adminUnlocked;
+  body.hidden = !adminUnlocked;
+
+  if(adminUnlocked){
+    if(!adminProjects) adminProjects = deepClone(PROJECTS);
+    await fillAdminConfigForm();
+    renderAdminProjectList();
+    setAdminLog('');
+    return;
+  }
+  setAdminGateError('');
+}
+
+/* ---------- 6-2. GitHub 토큰 암호화 (비밀번호 기반) ----------
    브라우저에 저장해두는 GitHub 토큰을, 관리자 비밀번호로부터 만든 키로
-   암호화해서 저장합니다(AES-GCM). 비밀번호 원문은 저장되지 않고, 이번
-   세션의 메모리(adminSessionPassword)에만 있다가 탭을 닫으면 사라집니다. */
+   암호화해서 저장합니다(AES-GCM). 비밀번호 원문은 저장되지 않고, 이번 세션의
+   메모리(adminSessionPassword)에만 있다가 탭을 닫으면 사라집니다. */
+
 async function deriveKeyFromPassword(password, saltBytes){
   const baseKey = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveKey']);
   return crypto.subtle.deriveKey(
@@ -1716,134 +1638,247 @@ async function deriveKeyFromPassword(password, saltBytes){
     ['encrypt', 'decrypt']
   );
 }
-function bufToB64(buf){ return btoa(String.fromCharCode(...new Uint8Array(buf))); }
-function b64ToBuf(b64){ return Uint8Array.from(atob(b64), c => c.charCodeAt(0)); }
 
 async function encryptWithPassword(plainText, password){
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const key = await deriveKeyFromPassword(password, salt);
   const cipherBuf = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(plainText));
-  return { c: bufToB64(cipherBuf), iv: bufToB64(iv), s: bufToB64(salt) };
+  return { c: bytesToBase64(new Uint8Array(cipherBuf)), iv: bytesToBase64(iv), s: bytesToBase64(salt) };
 }
+
 async function decryptWithPassword(enc, password){
   if(!enc || !enc.c) return '';
-  const key = await deriveKeyFromPassword(password, b64ToBuf(enc.s));
-  const plainBuf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64ToBuf(enc.iv) }, key, b64ToBuf(enc.c));
+  const key = await deriveKeyFromPassword(password, base64ToBytes(enc.s));
+  const plainBuf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: base64ToBytes(enc.iv) }, key, base64ToBytes(enc.c));
   return new TextDecoder().decode(plainBuf);
 }
 
-function setAdminGateError(msg){
-  const el = document.getElementById('admin-gate-error');
-  if(el) el.textContent = msg || '';
+/* ---------- 6-3. GitHub 연결 정보 입력칸 ---------- */
+
+/* 입력칸의 값을 읽어 기본값까지 채운 객체로 돌려줍니다 */
+function readGhForm(){
+  const val = key => ($(GH_FIELD_IDS[key]).value || '').trim();
+  return {
+    owner:  val('owner'),
+    repo:   val('repo'),
+    branch: val('branch') || GH_DEFAULTS.branch,
+    path:   val('path')   || GH_DEFAULTS.path,
+    token:  val('token'),
+  };
 }
 
-/* 세션 잠금 해제 여부에 따라 게이트(잠금 화면) 또는 실제 관리자 화면을 보여줍니다 */
-async function updateAdminGate(){
-  const gate = document.getElementById('admin-gate');
-  const body = document.getElementById('admin-body');
-  if(!gate || !body) return;
+async function fillAdminConfigForm(){
+  const cfg = readStoredJson(ADMIN_CONFIG_KEY);
 
-  const unlocked = adminUnlocked;
-  gate.hidden = unlocked;
-  body.hidden = !unlocked;
+  ['owner', 'repo', 'branch', 'path'].forEach(key => {
+    const el = $(GH_FIELD_IDS[key]);
+    if(el) el.value = cfg[key] || el.value || GH_DEFAULTS[key] || '';
+  });
 
-  if(unlocked){
-    if(!adminProjects) adminProjects = JSON.parse(JSON.stringify(PROJECTS));
-    if(!adminStatuses) adminStatuses = statusConfigToList(STATUS_CONFIG);
-    await fillAdminConfigForm();
-    renderAdminStatusList();
-    renderAdminProjectList();
-    setAdminLog('');
-    return;
+  /* 토큰 입력칸에 이미 값이 있으면(방금 손으로 입력했거나 이전에 채워진 경우) 그대로 둡니다.
+     화면을 왔다 갔다 할 때마다 지워지면 저장 전에 입력한 토큰이 계속 날아가기 때문입니다.
+     칸이 비어있을 때만, 저장해둔 값이 있으면 복호화해서 채워 넣습니다. */
+  const tokenEl = $(GH_FIELD_IDS.token);
+  if(tokenEl && !tokenEl.value && cfg.tokenEnc && adminSessionPassword){
+    try{ tokenEl.value = await decryptWithPassword(cfg.tokenEnc, adminSessionPassword); }
+    catch(e){ setAdminLog('저장된 토큰을 불러오지 못했습니다. 다시 입력하고 저장해주세요.', 'error'); }
   }
-
-  setAdminGateError('');
 }
 
-/* ADMIN 화면에 들어올 때마다 잠금 상태를 확인합니다 (탭을 새로고침하면 항상 다시 잠깁니다) */
-function initAdminView(){
-  updateAdminGate();
+/* 버튼 클릭과 자동 저장 양쪽에서 쓰는 저장 함수 */
+async function saveGhConfig(){
+  if(!adminSessionPassword) return;
+  const { token, ...cfg } = readGhForm();
+  cfg.tokenEnc = token ? await encryptWithPassword(token, adminSessionPassword) : null;
+  localStorage.setItem(ADMIN_CONFIG_KEY, JSON.stringify(cfg));
 }
 
-/* ---------- 유니코드(한글 등)를 GitHub API가 요구하는 base64로 안전하게 변환 ---------- */
-function utf8ToBase64(str){ return btoa(unescape(encodeURIComponent(str))); }
-function base64ToUtf8(str){ return decodeURIComponent(escape(atob(str.replace(/\n/g, '')))); }
+/* 입력하는 즉시(0.6초 뒤) 자동으로 암호화해서 저장합니다. 한 번 입력해두면
+   화면 전환/새로고침/재잠금 이후에도 (같은 비밀번호로 잠금을 풀면) 그대로 남아있습니다. */
+let ghConfigSaveTimer = null;
+function scheduleGhConfigSave(){
+  clearTimeout(ghConfigSaveTimer);
+  ghConfigSaveTimer = setTimeout(saveGhConfig, 600);
+}
+
+/* ---------- 6-4. 프로젝트 편집 목록 ---------- */
+
+function emptyAdminProject(){
+  return deepClone(PROJECT_DEFAULTS);
+}
+
+/* 접혀 있어도 숨은 항목(링크/태그/특징)이 얼마나 채워져 있는지 한 줄로 보여줍니다 */
+function adminSummaryText(p){
+  const links = (p.link ? 1 : 0) + (p.link2 ? 1 : 0);
+  return `링크 ${links}개 · 태그 ${(p.tags || []).length}개 · 특징 ${(p.features || []).length}개`;
+}
+
+/* 상태 색을 행 왼쪽 띠로 보여주기 위한 값 */
+const adminStatusColor = key => getStatusInfo(key).color || '#71717A';
+
+function renderAdminProjectList(){
+  const root = $('admin-project-list');
+  if(!root || !adminProjects) return;
+
+  const statusOptions = Object.keys(STATUS_CONFIG)
+    .sort((a, b) => (STATUS_CONFIG[a].order ?? 0) - (STATUS_CONFIG[b].order ?? 0))
+    .map(key => `<option value="${escapeHtml(key)}" title="${escapeHtml(key)}">${escapeHtml(STATUS_CONFIG[key].label)}</option>`)
+    .join('');
+
+  root.innerHTML = adminProjects.map((p, idx) => {
+    const open = adminExpanded.has(p);
+    return `
+    <div class="admin-item" data-idx="${idx}" style="--dot:${escapeHtml(adminStatusColor(p.status))}">
+      <div class="admin-row">
+        <div class="admin-cell-num">${idx + 1}</div>
+        <div class="admin-cell-title">
+          <span class="admin-cell-label">제목</span>
+          <input type="text" data-field="title" aria-label="제목" placeholder="프로젝트 제목" value="${escapeHtml(p.title || '')}">
+          <div class="admin-summary">${adminSummaryText(p)}</div>
+        </div>
+        <div><span class="admin-cell-label">상태</span><select data-field="status" aria-label="상태">${statusOptions}</select></div>
+        <div><span class="admin-cell-label">버전</span><input type="text" data-field="model" aria-label="버전" placeholder="v1.0" value="${escapeHtml(p.model || '')}"></div>
+        <div><span class="admin-cell-label">플랫폼</span><input type="text" data-field="platform" aria-label="플랫폼" value="${escapeHtml(p.platform || '')}"></div>
+        <div><span class="admin-cell-label">업데이트</span><input type="text" data-field="updatedAt" aria-label="최근 업데이트" placeholder="2026-08" value="${escapeHtml(p.updatedAt || '')}"></div>
+        <div class="admin-row-actions">
+          <button type="button" class="admin-move-up" title="위로" ${idx === 0 ? 'disabled' : ''}>▲</button>
+          <button type="button" class="admin-move-down" title="아래로" ${idx === adminProjects.length - 1 ? 'disabled' : ''}>▼</button>
+          <button type="button" class="admin-toggle-detail" aria-expanded="${open}">${open ? '접기 ▴' : '상세 ▾'}</button>
+          <button type="button" class="admin-remove-project">삭제</button>
+        </div>
+      </div>
+      <div class="admin-detail" ${open ? '' : 'hidden'}>
+        <label class="admin-field"><span>설명</span><textarea data-field="desc">${escapeHtml(p.desc || '')}</textarea></label>
+        <div class="admin-grid">
+          <label class="admin-field"><span>링크1 (없으면 비워두기)</span><input type="text" data-field="link" value="${escapeHtml(p.link || '')}" placeholder="https://..."></label>
+          <label class="admin-field"><span>아이콘 이름</span><input type="text" data-field="icon" value="${escapeHtml(p.icon || '')}" placeholder="folder, rocket 등"></label>
+          <label class="admin-field"><span>링크2 URL (없으면 비워두기)</span><input type="text" data-field="link2" value="${escapeHtml(p.link2 || '')}" placeholder="https://..."></label>
+          <label class="admin-field"><span>링크2 표시 이름</span><input type="text" data-field="link2Label" value="${escapeHtml(p.link2Label || '')}" placeholder="예: 웹사이트 (비우면 자동)"></label>
+        </div>
+        <label class="admin-field"><span>기술 스택 (쉼표로 구분)</span><input type="text" data-field="tags" value="${escapeHtml((p.tags || []).join(', '))}"></label>
+        <label class="admin-field"><span>특징 (한 줄에 하나씩)</span><textarea data-field="features">${escapeHtml((p.features || []).join('\n'))}</textarea></label>
+      </div>
+    </div>`;
+  }).join('');
+
+  /* innerHTML 문자열로는 <select>의 선택값을 넣기 까다로워, 렌더링 후 따로 지정합니다 */
+  root.querySelectorAll('.admin-item').forEach(item => {
+    const sel = item.querySelector('select[data-field="status"]');
+    if(sel) sel.value = adminProjects[Number(item.dataset.idx)].status || 'wip';
+  });
+}
+
+/* 프로젝트 한 칸(위/아래)씩 옮깁니다 */
+function moveAdminProject(idx, delta){
+  const target = idx + delta;
+  if(target < 0 || target >= adminProjects.length) return;
+  [adminProjects[idx], adminProjects[target]] = [adminProjects[target], adminProjects[idx]];
+  renderAdminProjectList();
+}
+
+/* 입력칸이 바뀔 때마다 adminProjects 배열에 즉시 반영하고, 버튼 클릭(이동/삭제/펼치기)도
+   처리합니다. 이벤트 위임이라 목록이 다시 그려져도 다시 연결할 필요가 없습니다. */
+function bindAdminProjectListEvents(){
+  const root = $('admin-project-list');
+  if(!root) return;
+
+  root.addEventListener('input', e => {
+    const field = e.target.dataset.field;
+    const item = e.target.closest('.admin-item');
+    if(!field || !item) return;
+
+    const p = adminProjects[Number(item.dataset.idx)];
+    if(field === 'tags'){
+      p.tags = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+    } else if(field === 'features'){
+      p.features = e.target.value.split('\n').map(s => s.trim()).filter(Boolean);
+    } else {
+      p[field] = e.target.value;
+    }
+    if(field === 'status') item.style.setProperty('--dot', adminStatusColor(p.status));
+    const summary = item.querySelector('.admin-summary');
+    if(summary) summary.textContent = adminSummaryText(p);
+  });
+
+  root.addEventListener('click', e => {
+    const item = e.target.closest('.admin-item');
+    if(!item) return;
+    const idx = Number(item.dataset.idx);
+
+    if(e.target.closest('.admin-remove-project')){
+      if(!confirm('이 프로젝트를 목록에서 삭제할까요? (GitHub에 저장하기 전까지는 취소할 수 있습니다)')) return;
+      adminExpanded.delete(adminProjects[idx]);
+      adminProjects.splice(idx, 1);
+      renderAdminProjectList();
+    } else if(e.target.closest('.admin-move-up')){
+      moveAdminProject(idx, -1);
+    } else if(e.target.closest('.admin-move-down')){
+      moveAdminProject(idx, +1);
+    } else if(e.target.closest('.admin-toggle-detail')){
+      /* 전체를 다시 그리지 않고 이 항목만 펼치거나 접습니다 (다른 항목에 입력 중인 내용은 그대로 유지) */
+      const btn = e.target.closest('.admin-toggle-detail');
+      const detail = item.querySelector('.admin-detail');
+      const willOpen = detail.hidden;
+      detail.hidden = !willOpen;
+      btn.setAttribute('aria-expanded', String(willOpen));
+      btn.textContent = willOpen ? '접기 ▴' : '상세 ▾';
+      if(willOpen) adminExpanded.add(adminProjects[idx]); else adminExpanded.delete(adminProjects[idx]);
+    }
+  });
+}
+
+function addAdminProject(){
+  const newProject = emptyAdminProject();
+  adminProjects.push(newProject);
+  adminExpanded.add(newProject); // 새 프로젝트는 바로 채워 넣을 수 있게 펼쳐서 보여줍니다
+  renderAdminProjectList();
+
+  const items = document.querySelectorAll('#admin-project-list .admin-item');
+  const last = items[items.length - 1];
+  if(last){
+    last.scrollIntoView({ behavior:'smooth', block:'center' });
+    const titleInput = last.querySelector('input[data-field="title"]');
+    if(titleInput) titleInput.focus({ preventScroll:true });
+  }
+}
+
+/* 목록 전체(adminProjects 배열)를 실제로 재정렬합니다. 화면 정렬 드롭다운과 달리
+   여기서는 원본 순서 자체가 바뀌고, 되돌리려면 다시 손으로 옮기거나 (저장 전이라면)
+   페이지를 새로고침해야 합니다 — 그래서 누르기 전에 한 번 확인합니다. */
+function applyAdminSort(){
+  const sortKey = $('admin-project-sort').value;
+  if(!confirm('지금 목록 순서를 선택한 기준으로 정렬합니다. 기존 수동 순서는 사라집니다. 계속할까요?')) return;
+
+  adminProjects = sortProjectsList(adminProjects, sortKey, buildStatusOrderMap());
+  renderAdminProjectList();
+  setAdminLog('정렬을 적용했습니다. 아래에서 확인하고, 맘에 들면 저장(배포)해주세요.', 'success');
+}
+
+/* ---------- 6-5. GitHub에 저장 ---------- */
 
 /* 편집한 adminProjects 배열을, 이 파일이 원래 쓰던 것과 같은 형태의 JS 코드 문자열로 만듭니다 */
 function projectsToCode(list){
+  const keys = Object.keys(PROJECT_DEFAULTS);
   const body = list.map(p => {
-    const lines = [
-      `    status: ${JSON.stringify(p.status || 'wip')},`,
-      `    model: ${JSON.stringify(p.model || '')},`,
-      `    icon: ${JSON.stringify(p.icon || 'folder')},`,
-      `    title: ${JSON.stringify(p.title || '')},`,
-      `    desc: ${JSON.stringify(p.desc || '')},`,
-      `    tags: ${JSON.stringify(p.tags || [])},`,
-      `    features: ${JSON.stringify(p.features || [])},`,
-      `    platform: ${JSON.stringify(p.platform || '')},`,
-      `    link: ${JSON.stringify(p.link || '')},`,
-      `    link2: ${JSON.stringify(p.link2 || '')},`,
-      `    link2Label: ${JSON.stringify(p.link2Label || '')},`,
-      `    updatedAt: ${JSON.stringify(p.updatedAt || '')}`,
-    ].join('\n');
+    const lines = keys
+      .map((key, i) => `    ${key}: ${JSON.stringify(p[key] || PROJECT_DEFAULTS[key])}${i < keys.length - 1 ? ',' : ''}`)
+      .join('\n');
     return `  {\n${lines}\n  }`;
   }).join(',\n');
   return `const PROJECTS = [\n${body}\n];`;
 }
 
-/* 편집한 adminStatuses 배열을 STATUS_CONFIG 객체 형태의 JS 코드 문자열로 만듭니다.
-   배열의 순서가 곧 order 값이 됩니다 (화면에서 위로/아래로 옮기면 그대로 반영) */
-function statusesToCode(list){
-  const body = list.map((s, idx) => {
-    const key = /^[A-Za-z_][A-Za-z0-9_]*$/.test(s.key) ? s.key : JSON.stringify(s.key);
-    return `  ${key}: { label: ${JSON.stringify(s.label || '')}, color: ${JSON.stringify(s.color || '#71717A')}, order: ${idx} },`;
-  }).join('\n');
-  return `const STATUS_CONFIG = {\n${body}\n};`;
-}
-
-/* 저장 전에 상태 목록이 실제로 사용 가능한 형태인지 확인합니다 */
-function validateAdminStatuses(list){
-  if(!list.length) return '상태를 최소 1개는 남겨두어야 합니다.';
-  const seen = new Set();
-  for(const s of list){
-    if(!s.key || !/^[A-Za-z_][A-Za-z0-9_]*$/.test(s.key)){
-      return `"${s.key || '(빈 값)'}"는 올바른 key가 아닙니다. 영문자로 시작하는 영문/숫자만 사용해주세요.`;
-    }
-    if(seen.has(s.key)) return `key "${s.key}"가 중복되었습니다. key는 서로 달라야 합니다.`;
-    seen.add(s.key);
-    if(!s.label) return `key "${s.key}"의 화면 표시 이름이 비어있습니다.`;
-  }
-  return null;
-}
-
-/* 저장이 끝난 뒤, 지금 보고 있는 화면에도 바로 반영합니다 (STATUS_CONFIG는 const 객체라
-   재할당은 안 되니 내용만 비우고 새로 채웁니다) */
-function applyStatusConfigLive(list){
-  Object.keys(STATUS_CONFIG).forEach(k => delete STATUS_CONFIG[k]);
-  list.forEach((s, idx) => { STATUS_CONFIG[s.key] = { label: s.label, color: s.color, order: idx }; });
-}
-
-/* GitHub Contents API로 현재 파일을 가져와, 마커 사이의 PROJECTS / STATUS_CONFIG 선언부만 교체해서 다시 커밋합니다 */
+/* GitHub Contents API로 현재 파일을 가져와, 마커 사이의 PROJECTS 선언부만 교체해서 다시 커밋합니다 */
 async function publishProjectsToGitHub(){
-  const owner  = document.getElementById('gh-owner').value.trim();
-  const repo   = document.getElementById('gh-repo').value.trim();
-  const branch = document.getElementById('gh-branch').value.trim() || 'main';
-  const path   = document.getElementById('gh-path').value.trim() || 'index.html';
-  const token  = document.getElementById('gh-token').value.trim();
+  const { owner, repo, branch, path, token } = readGhForm();
 
   if(!owner || !repo || !token){
     setAdminLog('GitHub 아이디, 저장소 이름, 토큰을 먼저 입력해주세요.', 'error');
     return;
   }
 
-  const statusError = validateAdminStatuses(adminStatuses || []);
-  if(statusError){
-    setAdminLog(`상태 목록을 확인해주세요: ${statusError}`, 'error');
-    return;
-  }
-
-  const publishBtn = document.getElementById('admin-publish');
+  const publishBtn = $('admin-publish');
   if(publishBtn) publishBtn.disabled = true;
   setAdminLog('GitHub에서 현재 파일을 불러오는 중...');
 
@@ -1858,33 +1893,23 @@ async function publishProjectsToGitHub(){
         : `GitHub에서 파일을 불러오지 못했습니다 (${getRes.status}). 토큰 권한을 확인해주세요.`);
     }
     const fileData = await getRes.json();
-    let currentContent = base64ToUtf8(fileData.content);
+    const currentContent = base64ToUtf8(fileData.content);
 
-    const replaceBetween = (content, startMarker, endMarker, code, missingMsg) => {
-      const startIdx = content.indexOf(startMarker);
-      const endIdx = content.indexOf(endMarker);
-      if(startIdx === -1 || endIdx === -1 || endIdx < startIdx) throw new Error(missingMsg);
-      return content.slice(0, startIdx) + `${startMarker}\n${code}\n` + content.slice(endIdx);
-    };
-
-    currentContent = replaceBetween(
-      currentContent, '/* PROJECTS_DATA_START */', '/* PROJECTS_DATA_END */',
-      projectsToCode(adminProjects),
-      '파일 안에서 PROJECTS 영역 표시(마커)를 찾지 못했습니다. 파일이 변형된 것 같습니다.'
-    );
-    currentContent = replaceBetween(
-      currentContent, '/* STATUS_DATA_START */', '/* STATUS_DATA_END */',
-      statusesToCode(adminStatuses),
-      '파일 안에서 상태(STATUS) 영역 표시(마커)를 찾지 못했습니다. 파일이 변형된 것 같습니다.'
-    );
-    const newContent = currentContent;
+    const startIdx = currentContent.indexOf(PROJECTS_MARKER_START);
+    const endIdx   = currentContent.indexOf(PROJECTS_MARKER_END);
+    if(startIdx === -1 || endIdx === -1 || endIdx < startIdx){
+      throw new Error('파일 안에서 PROJECTS 영역 표시(마커)를 찾지 못했습니다. 파일이 변형된 것 같습니다.');
+    }
+    const newContent = currentContent.slice(0, startIdx)
+      + `${PROJECTS_MARKER_START}\n${projectsToCode(adminProjects)}\n`
+      + currentContent.slice(endIdx);
 
     setAdminLog('GitHub에 커밋하는 중...');
     const putRes = await fetch(apiUrl, {
       method: 'PUT',
       headers: { ...headers, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        message: document.getElementById('gh-commit-message').value.trim() || '포트폴리오 프로젝트 업데이트 (관리자 도구)',
+        message: $('gh-commit-message').value.trim() || '포트폴리오 프로젝트 업데이트 (관리자 도구)',
         content: utf8ToBase64(newContent),
         sha: fileData.sha,
         branch,
@@ -1898,8 +1923,7 @@ async function publishProjectsToGitHub(){
 
     /* 지금 보고 있는 화면에도 바로 반영 (다음 방문자는 배포가 끝나는 대로 자동으로 최신 버전을 보게 됩니다) */
     PROJECTS.length = 0;
-    PROJECTS.push(...JSON.parse(JSON.stringify(adminProjects)));
-    applyStatusConfigLive(adminStatuses);
+    PROJECTS.push(...deepClone(adminProjects));
     renderAll();
 
     setAdminLog('저장 완료! 몇십 초 후 실제 배포된 사이트에도 반영됩니다.', 'success');
@@ -1910,203 +1934,101 @@ async function publishProjectsToGitHub(){
   }
 }
 
-bindAdminProjectListEvents();
-bindAdminStatusListEvents();
+/* ---------- 6-6. 관리자 화면 이벤트 연결 (페이지 시작 시 한 번) ---------- */
+function bindAdminEvents(){
+  bindAdminProjectListEvents();
 
-/* ---------- 비밀번호 게이트 버튼 ---------- */
-const adminUnlockBtn = document.getElementById('admin-unlock-btn');
-if(adminUnlockBtn) adminUnlockBtn.addEventListener('click', async () => {
-  const lockedMs = remainingLockoutMs();
-  if(lockedMs > 0){
-    setAdminGateError(`시도 횟수를 초과했습니다. ${Math.ceil(lockedMs / 60000)}분 후 다시 시도해주세요.`);
-    return;
-  }
+  /* 비밀번호 게이트 */
+  on('admin-unlock-btn', 'click', tryUnlockAdmin);
+  on('admin-unlock-pass', 'keydown', e => { if(e.key === 'Enter') tryUnlockAdmin(); });
+  on('admin-logout-btn', 'click', lockAdmin);
 
-  const pass = document.getElementById('admin-unlock-pass').value;
-  const hash = await sha256Hex(pass);
-  if(hash === ADMIN_PASS_HASH){
-    clearLoginAttempts();
-    adminUnlocked = true;
-    adminSessionPassword = pass;
-    document.getElementById('admin-unlock-pass').value = '';
-    await updateAdminGate();
-  } else {
-    recordFailedAttempt();
-    const nowLockedMs = remainingLockoutMs();
-    if(nowLockedMs > 0){
-      setAdminGateError(`시도 횟수를 초과했습니다. ${Math.ceil(nowLockedMs / 60000)}분 후 다시 시도해주세요.`);
-    } else {
-      const remaining = MAX_LOGIN_ATTEMPTS - (getLoginAttempts().count || 0);
-      setAdminGateError(`비밀번호가 올바르지 않습니다. (남은 시도 ${remaining}회)`);
+  /* 프로젝트 목록 도구 */
+  on('admin-add-project', 'click', addAdminProject);
+  on('admin-apply-sort', 'click', applyAdminSort);
+  on('admin-expand-all', 'click', () => {
+    adminProjects.forEach(p => adminExpanded.add(p));
+    renderAdminProjectList();
+  });
+  on('admin-collapse-all', 'click', () => {
+    adminExpanded.clear();
+    renderAdminProjectList();
+  });
+
+  /* GitHub 연결 정보 */
+  on('gh-save-config', 'click', async () => {
+    if(!adminSessionPassword){
+      setAdminLog('세션 정보가 없어 토큰을 안전하게 저장할 수 없습니다. 잠금 화면에서 비밀번호를 다시 입력한 뒤 시도해주세요.', 'error');
+      return;
     }
-  }
-});
+    await saveGhConfig();
+    setAdminLog('이 브라우저에 암호화하여 저장했습니다. 다음부터는 토큰까지 자동으로 채워집니다.', 'success');
+  });
+  on('gh-clear-config', 'click', () => {
+    localStorage.removeItem(ADMIN_CONFIG_KEY);
+    setAdminLog('저장된 GitHub 연결 정보를 지웠습니다.', 'success');
+  });
+  Object.values(GH_FIELD_IDS).forEach(id => on(id, 'input', scheduleGhConfigSave));
 
-/* 비밀번호 입력칸에서 Enter로도 제출되게 합니다 */
-const adminUnlockInput = document.getElementById('admin-unlock-pass');
-if(adminUnlockInput) adminUnlockInput.addEventListener('keydown', e => {
-  if(e.key === 'Enter' && adminUnlockBtn) adminUnlockBtn.click();
-});
-
-const adminAddBtn = document.getElementById('admin-add-project');
-if(adminAddBtn) adminAddBtn.addEventListener('click', () => {
-  adminProjects.push(emptyAdminProject());
-  renderAdminProjectList();
-  const cards = document.querySelectorAll('#admin-project-list .admin-project-card');
-  const last = cards[cards.length - 1];
-  if(last) last.scrollIntoView({ behavior:'smooth', block:'center' });
-});
-
-const adminAddStatusBtn = document.getElementById('admin-add-status');
-if(adminAddStatusBtn) adminAddStatusBtn.addEventListener('click', () => {
-  adminStatuses.push(emptyAdminStatus());
-  renderAdminStatusList();
-  const cards = document.querySelectorAll('#admin-status-list .admin-project-card');
-  const last = cards[cards.length - 1];
-  if(last) last.scrollIntoView({ behavior:'smooth', block:'center' });
-});
-
-/* 목록 전체(adminProjects 배열)를 실제로 재정렬합니다. 화면 정렬 드롭다운과 달리
-   여기서는 원본 순서 자체가 바뀌고, 되돌리려면 다시 손으로 옮기거나 페이지를
-   새로고침(저장 전이라면)해야 합니다 — 그래서 누르기 전에 한 번 확인합니다. */
-const adminApplySortBtn = document.getElementById('admin-apply-sort');
-if(adminApplySortBtn) adminApplySortBtn.addEventListener('click', () => {
-  const sortKey = document.getElementById('admin-project-sort').value;
-  if(!confirm('지금 목록 순서를 선택한 기준으로 정렬합니다. 기존 수동 순서는 사라집니다. 계속할까요?')) return;
-
-  const statusOrderMap = {};
-  (adminStatuses || []).forEach((s, idx) => { statusOrderMap[s.key] = idx; });
-
-  adminProjects = sortProjectsList(adminProjects, sortKey, statusOrderMap);
-  renderAdminProjectList();
-  setAdminLog('정렬을 적용했습니다. 아래에서 확인하고, 맘에 들면 저장(배포)해주세요.', 'success');
-});
-
-/* 공용 컴퓨터 등에서 자리를 비울 때, 새로고침 없이 즉시 다시 잠그는 버튼입니다.
-   비밀번호는 메모리에서 지우고, 화면에 남아있던 토큰 입력값도 함께 지웁니다. */
-const adminLogoutBtn = document.getElementById('admin-logout-btn');
-if(adminLogoutBtn) adminLogoutBtn.addEventListener('click', () => {
-  adminUnlocked = false;
-  adminSessionPassword = null;
-  const tokenEl = document.getElementById('gh-token');
-  if(tokenEl) tokenEl.value = '';
-  updateAdminGate();
-});
-
-/* 저장 로직을 함수로 분리해서, 버튼 클릭과 자동 저장(아래) 양쪽에서 재사용합니다 */
-async function saveGhConfig(){
-  if(!adminSessionPassword) return;
-  const token = document.getElementById('gh-token').value.trim();
-  const cfg = {
-    owner:  document.getElementById('gh-owner').value.trim(),
-    repo:   document.getElementById('gh-repo').value.trim(),
-    branch: document.getElementById('gh-branch').value.trim() || 'main',
-    path:   document.getElementById('gh-path').value.trim() || 'index.html',
-    tokenEnc: token ? await encryptWithPassword(token, adminSessionPassword) : null,
-  };
-  localStorage.setItem(ADMIN_CONFIG_KEY, JSON.stringify(cfg));
+  on('admin-publish', 'click', publishProjectsToGitHub);
 }
 
-const ghSaveBtn = document.getElementById('gh-save-config');
-if(ghSaveBtn) ghSaveBtn.addEventListener('click', async () => {
-  if(!adminSessionPassword){
-    setAdminLog('세션 정보가 없어 토큰을 안전하게 저장할 수 없습니다. 잠금 화면에서 비밀번호를 다시 입력한 뒤 시도해주세요.', 'error');
-    return;
-  }
-  await saveGhConfig();
-  setAdminLog('이 브라우저에 암호화하여 저장했습니다. 다음부터는 토큰까지 자동으로 채워집니다.', 'success');
-});
-
-/* GitHub 연결 정보(토큰 포함)를 입력하는 즉시 자동으로 암호화해서 저장합니다.
-   이제 "이 브라우저에 저장" 버튼을 따로 누르지 않아도, 한 번 입력해두면
-   화면 전환/새로고침/재잠금 이후에도 (같은 비밀번호로 잠금을 풀면) 그대로 남아있습니다. */
-let ghConfigSaveTimer = null;
-['gh-owner', 'gh-repo', 'gh-branch', 'gh-path', 'gh-token'].forEach(id => {
-  const el = document.getElementById(id);
-  if(!el) return;
-  el.addEventListener('input', () => {
-    clearTimeout(ghConfigSaveTimer);
-    ghConfigSaveTimer = setTimeout(saveGhConfig, 600);
-  });
-});
-
-const ghClearBtn = document.getElementById('gh-clear-config');
-if(ghClearBtn) ghClearBtn.addEventListener('click', () => {
-  localStorage.removeItem(ADMIN_CONFIG_KEY);
-  setAdminLog('저장된 GitHub 연결 정보를 지웠습니다.', 'success');
-});
-
-const adminPublishBtn = document.getElementById('admin-publish');
-if(adminPublishBtn) adminPublishBtn.addEventListener('click', publishProjectsToGitHub);
 
 /* ============================================================
-   다크 모드 테마 관리
-   - FOUC 방지 스크립트(head)가 이미 data-theme을 설정하므로
-     여기서는 UI 요소 동기화와 localStorage 저장만 담당합니다.
+   7. 테마 (라이트 / 다크)
+   ------------------------------------------------------------
+   첫 화면의 테마는 <head>의 작은 스크립트가 미리 data-theme에 넣어둡니다
+   (깜빡임 방지). 여기서는 버튼 문구/주소창 색 동기화와 저장만 담당합니다.
 ============================================================ */
-const themeToggleBtn = document.getElementById('theme-toggle');
-const themeMeta      = document.getElementById('theme-color-meta');
-const themeText      = document.getElementById('theme-text');
+
+const getTheme = () => document.documentElement.getAttribute('data-theme') || 'light';
 
 /* saveToStorage: 사용자가 직접 선택했을 때만 true로 전달합니다 */
 function applyTheme(theme, saveToStorage){
   document.documentElement.setAttribute('data-theme', theme);
   if(saveToStorage) localStorage.setItem('theme-preference', theme);
-  if(themeMeta) themeMeta.setAttribute('content', theme === 'dark' ? '#09090B' : '#FAFAF9');
-  if(themeText) themeText.textContent = theme === 'dark' ? '다크 모드' : '라이트 모드';
+
+  const meta = $('theme-color-meta');
+  if(meta) meta.setAttribute('content', theme === 'dark' ? '#09090B' : '#FAFAF9');
+  const text = $('theme-text');
+  if(text) text.textContent = theme === 'dark' ? '다크 모드' : '라이트 모드';
 }
 
 function initTheme(){
-  /* FOUC 방지 스크립트가 이미 data-theme을 설정했으므로
-     themeText · themeMeta만 현재 값에 맞게 동기화합니다 */
-  const current = document.documentElement.getAttribute('data-theme') || 'light';
-  if(themeMeta) themeMeta.setAttribute('content', current === 'dark' ? '#09090B' : '#FAFAF9');
-  if(themeText) themeText.textContent = current === 'dark' ? '다크 모드' : '라이트 모드';
-}
+  applyTheme(getTheme(), false); // 이미 정해진 값에 맞춰 문구/메타만 동기화
 
-if(themeToggleBtn){
-  themeToggleBtn.addEventListener('click', () => {
-    const current = document.documentElement.getAttribute('data-theme') || 'light';
-    /* 사용자가 직접 전환 → localStorage에 저장 */
-    applyTheme(current === 'dark' ? 'light' : 'dark', true);
+  /* 사용자가 직접 전환 → localStorage에 저장 */
+  on('theme-toggle', 'click', () => applyTheme(getTheme() === 'dark' ? 'light' : 'dark', true));
+
+  /* 시스템 설정 변경 감지: 사용자 수동 설정이 없을 때만 반응하고, localStorage는 건드리지 않습니다 */
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+    if(!localStorage.getItem('theme-preference')){
+      applyTheme(e.matches ? 'dark' : 'light', false);
+    }
   });
 }
 
-/* 시스템 설정 변경 감지: 사용자 수동 설정이 없을 때만 반응하고, localStorage는 건드리지 않습니다 */
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-  if(!localStorage.getItem('theme-preference')){
-    applyTheme(e.matches ? 'dark' : 'light', false);
-  }
-});
-
-initTheme();
-renderAll();
-renderCreatorLinks();
-initSearch();
-initSort();
-bindFilterBarEvents();
 
 /* ============================================================
-   상단 메뉴(WORKSHOP LOG / CREATOR INFO) 화면 전환
-   - 같은 html 안에서 각 화면을 보였다 숨겼다 합니다.
-   - URL 해시나 History API는 쓰지 않습니다: 이 파일이 about:srcdoc 같은
-     샌드박스 iframe(예: 미리보기 화면)에서 열릴 때 location.hash나
-     history.pushState를 건드리면 브라우저가 SecurityError로 막기 때문에,
-     여기서는 순수 JS 변수(currentView)로만 화면 상태를 관리합니다.
+   8. 화면 전환
+   ------------------------------------------------------------
+   같은 html 안에서 각 화면을 보였다 숨겼다 합니다. 화면 전환에는 History API를
+   쓰지 않습니다: 이 파일이 about:srcdoc 같은 샌드박스 iframe(예: 미리보기 화면)에서
+   열릴 때 history.pushState를 건드리면 브라우저가 SecurityError로 막기 때문입니다.
+   (주소 끝의 #admin은 읽기만 합니다.)
 
    새 메뉴(화면)를 추가하는 법
-   ------------------------------------------------------------
    1. HTML에 <div id="view-이름" hidden>...</div> 화면 하나를 추가하고,
-   2. 아래 views 객체에 { 이름: document.getElementById('view-이름') } 한 줄 추가,
+   2. 아래 views 객체에 { 이름: $('view-이름') } 한 줄 추가,
    3. 메뉴 버튼에 data-show-view="이름" 속성만 달아주면 끝입니다.
-      (뒤로가기 버튼도 마찬가지로 data-show-view="catalog"만 달면 됩니다)
+      (뒤로가기 버튼도 data-show-view="catalog"만 달면 됩니다)
 ============================================================ */
-(function(){
-  const logoBtn = document.getElementById('logo-home');
+
+function initViews(){
   const views = {
-    catalog: document.getElementById('view-catalog'),
-    creator: document.getElementById('view-creator'),
-    admin: document.getElementById('view-admin'),
+    catalog: $('view-catalog'),
+    creator: $('view-creator'),
+    admin:   $('view-admin'),
   };
   if(!views.catalog) return;
 
@@ -2123,37 +2045,48 @@ bindFilterBarEvents();
     });
     document.title = viewTitles[name] ? `${viewTitles[name]} · ${baseTitle}` : baseTitle;
     window.scrollTo(0, 0);
-    if(name === 'admin' && typeof initAdminView === 'function') initAdminView();
+    if(name === 'admin') updateAdminGate();
   }
 
   /* data-show-view 속성이 붙은 모든 버튼(상단 메뉴, 각 화면의 뒤로가기 버튼)을
      이벤트 위임으로 한 번에 처리합니다 — 버튼이 늘어나도 코드를 더 추가할 필요가 없습니다 */
   document.addEventListener('click', e => {
     const btn = e.target.closest('[data-show-view]');
-    if(!btn) return;
-    showView(btn.dataset.showView);
+    if(btn) showView(btn.dataset.showView);
   });
 
-  /* 상단의 WORKSHOP LOG: catalog가 아닌 다른 화면이라면 catalog로 돌아가고,
-     이미 catalog라면 맨 위로 스크롤합니다 */
-  logoBtn && logoBtn.addEventListener('click', () => {
-    if(currentView !== 'catalog'){
-      showView('catalog');
-    } else {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+  /* 상단의 WORKSHOP LOG: 다른 화면이라면 catalog로 돌아가고, 이미 catalog라면 맨 위로 스크롤합니다 */
+  on('logo-home', 'click', () => {
+    if(currentView !== 'catalog') showView('catalog');
+    else window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
-  /* ADMIN 화면은 메뉴에 버튼을 두지 않습니다 (일반 방문자 눈에 안 띄도록).
-     대신 주소 끝에 #admin을 직접 붙여서 들어갑니다.
+  /* 주소 끝에 #admin을 붙여서도 ADMIN 화면으로 바로 들어갈 수 있습니다.
      예) https://12cchris.github.io/portfolio-site/#admin
      (비밀번호로 한 번 더 잠겨 있으니, 이 주소를 알아도 안에서 편집/배포는 못 합니다) */
-  function checkAdminHash(){
+  const checkAdminHash = () => {
     if(location.hash.slice(1).toLowerCase() === 'admin') showView('admin');
-  }
+  };
   checkAdminHash();
   window.addEventListener('hashchange', checkAdminHash);
-})();
-  </script>
+}
+
+
+/* ============================================================
+   9. 시작
+============================================================ */
+
+function init(){
+  initTheme();
+  renderAll();
+  renderCreatorLinks();
+  bindCatalogEvents();
+  bindCreatorLinkEvents();
+  bindAdminEvents();
+  initViews();
+}
+
+init();
+</script>
 </body>
 </html>
