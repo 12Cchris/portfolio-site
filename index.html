@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<!-- 포트폴리오 사이트 v1.2.3 — 용량 경량화 (주석·공백 정리, 안 쓰는 CSS 제거. 동작은 그대로). 이전: v1.2.2 로딩·렌더링 최적화 / v1.2.1 코드 정리 / v1.2.0 관리자 프로젝트 편집을 한 줄 목록 + 펼치기(상세) 방식으로 개선 / v1.1.0 상태 편집 기능 삭제 -->
+<!-- 포트폴리오 사이트 v1.4.0 — 관리자 기술 스택 프리셋(그룹별 선택 버튼, 눌러서 켜고 끄기) 추가. 이전: v1.3.0 기술 스택 표기 규칙 도입(공백 정리·중복 제거·공식 표기 교정) / v1.2.5 업데이트 입력칸 예시를 현재 연월로 표시 / v1.2.4 관리자 화면의 lucide.dev 주소를 클릭하면 이동 / v1.2.3 용량 경량화 / v1.2.2 로딩·렌더링 최적화 / v1.2.1 코드 정리 / v1.2.0 관리자 프로젝트 편집을 한 줄 목록 + 펼치기(상세) 방식으로 개선 / v1.1.0 상태 편집 기능 삭제 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
@@ -74,6 +74,8 @@ b,strong,h1,h2,h3{font-weight:700}
 .admin-section:first-of-type{border-top:none;padding-top:0;margin-top:0}
 .admin-section-title{font-size:16px;margin:0 0 10px}
 .admin-hint{color:var(--muted);font-size:13px;line-height:1.7;margin:0 0 16px}
+.admin-hint a{color:var(--accent);font-weight:700;text-decoration:none}
+.admin-hint a:hover{text-decoration:underline}
 .admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px}
 .admin-field{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:700;color:var(--muted);margin-bottom:14px}
 .admin-field input,.admin-field select,.admin-field textarea{font-family:inherit;font-size:14px;font-weight:500;color:var(--ink);background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 12px;outline:none;transition:border-color .2s ease}
@@ -118,6 +120,13 @@ b,strong,h1,h2,h3{font-weight:700}
 .admin-row-actions button.admin-remove-project:hover{color:#DC2626}
 .admin-detail{border-top:1px dashed var(--border);padding:16px 16px 4px}
 .admin-detail[hidden]{display:none}
+.admin-field-tight{margin-bottom:8px}
+.tag-presets{margin:0 0 16px}
+.tag-group{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:6px}
+.tag-group-label{min-width:118px;font-size:12px;font-weight:700;color:var(--muted)}
+.tag-chip{font-family:inherit;font-size:12.5px;font-weight:600;color:var(--ink);background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:4px 11px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:border-color .2s ease, color .2s ease, background-color .2s ease}
+.tag-chip:hover{border-color:var(--accent);color:var(--accent)}
+.tag-chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#FFFFFF}
 @media (max-width: 860px){
   .admin-list-head{display:none}
   .admin-row{grid-template-columns:1fr 1fr}
@@ -309,7 +318,7 @@ h1{font-size:clamp(28px, 5vw, 44px);line-height:1.35;margin:0 0 16px;letter-spac
         어디에도 업로드되지 않습니다. 그래도 <b>다른 사람의 기기나 공용 컴퓨터에는 절대 입력하지 마세요.</b><br>
         토큰은 GitHub → Settings → Developer settings → <b>Fine-grained personal access tokens</b>에서
         이 저장소에 대해 <b>Contents: Read and write</b> 권한만 준 것을 새로 만들어 쓰는 걸 추천합니다.
-        <br>아이콘 편집은 https://lucide.dev/icons/ 에서 진행하세요.
+        <br>아이콘 편집은 <a href="https://lucide.dev/icons/" target="_blank" rel="noopener noreferrer">https://lucide.dev/icons/</a> 에서 진행하세요.
       </p>
       <div class="admin-grid">
         <label class="admin-field">
@@ -345,7 +354,9 @@ h1{font-size:clamp(28px, 5vw, 44px);line-height:1.35;margin:0 0 16px;letter-spac
       <p class="admin-hint">
         프로젝트가 한 줄씩 보입니다. 제목·상태·버전·플랫폼·최근 업데이트는 바로 고치고,
         설명·링크·아이콘·기술 스택·특징은 <b>[상세 ▾]</b>를 눌러 펼쳐서 고치세요.
-        다 고쳤으면 맨 아래 저장 버튼을 누르면 됩니다.
+        다 고쳤으면 맨 아래 저장 버튼을 누르면 됩니다.<br>
+        <b>기술 스택 규칙</b>: 쉼표(,)로 구분해 적으면, 칸을 벗어날 때 자동으로 정리됩니다 —
+        공백 정리 · 대소문자만 다른 중복 제거 · 알려진 기술(HTML, GitHub Pages 등)은 공식 표기로 교정.
       </p>
       <div class="admin-grid admin-grid-narrow">
         <label class="admin-field">
@@ -438,7 +449,7 @@ const STATUS_CONFIG = {
    link2:       두 번째 링크(선택). 없으면 "" 로 두면 됩니다.
    link2Label:  link2에 표시할 이름. 비워두면 link처럼 자동으로 라벨이 붙습니다.
                 (예: link2Label: "웹사이트")
-   tags:        기술 스택 배열, 원하는 만큼 추가 가능
+   tags:        기술 스택 배열, 원하는 만큼 추가 가능 (표기 규칙·선택 버튼 목록은 아래 TAG_PRESETS 주석 참고)
    features:    특징 목록 배열, 원하는 만큼 추가 가능
    updatedAt:   "YYYY-MM" 또는 "YYYY-MM-DD" 형식. 이 프로젝트를 마지막으로 손본 날짜.
                 일(day)까지 몰라도 괜찮습니다 — "2026-08"처럼 연월만 적어도 됩니다.
@@ -467,7 +478,7 @@ const PROJECTS = [
     icon: "music",
     title: "유튜브 mp3 변환기",
     desc: "영상의 원하는 구간만, 혹은 전체를 mp3로 변환하는 로컬 전용 도구. 혹시 모를 저작권 분쟁을 대비해 개인용 데스크톱 앱으로 만들었습니다.",
-    tags: ["PC","Python","ffmpeg","Inno Setup"],
+    tags: ["PC","Python","FFmpeg","Inno Setup"],
     features: ["시작~끝 구간 지정 변환","음질 128 / 192 / 320kbps 선택","여러 URL 연속 변환 큐"],
     platform: "Windows Desktop",
     link: "",
@@ -481,7 +492,7 @@ const PROJECTS = [
     icon: "wallet",
     title: "자산 기록 앱",
     desc: "엑셀로 관리하던 토스·적금·네이버페이·현금 등 자산 현황을 앱으로 옮기는 프로젝트. 목표 금액 달성률을 계속 추적합니다.",
-    tags: ["PC","Android","html"],
+    tags: ["PC","Android","HTML"],
     features: ["목표 금액 달성률 추적","안드로이드 / PC 동시 지원 목표","기기 간 데이터 동기화 목표"],
     platform: "Windows Desktop",
     link: "https://github.com/12Cchris/virtual-asset-tracker",
@@ -537,7 +548,7 @@ const PROJECTS = [
     icon: "scale",
     title: "가위바위보 심의위원회 공식 누리집",
     desc: "이음중앙관리국 산하 가위바위보 심의위원회 공식 누리집입니다.",
-    tags: ["PC","Web","HTML","Supabase","GitHub pages"],
+    tags: ["PC","Web","HTML","Supabase","GitHub Pages"],
     features: ["판례·규정 열람","위원 가입 및 실시간 명부","모의 대국 미니게임 + 승부 현황 통계","이음중앙관리국 산하"],
     platform: "Web",
     link: "https://github.com/12Cchris/rps-committee",
@@ -1105,6 +1116,45 @@ const PROJECT_DEFAULTS = {
   platform:'', link:'', link2:'', link2Label:'', updatedAt:'',
 };
 
+/* ---------- 기술 태그(기술 스택) 규칙 ----------
+   1) 쉼표(,)로 구분해서 적습니다.
+   2) 앞뒤 공백은 지우고, 안쪽의 연속 공백은 하나로 줄입니다.
+   3) 대소문자만 다른 중복은 하나만 남깁니다 (먼저 적은 것 유지, 순서 유지).
+   4) 아래 TAG_PRESETS에 있는 기술은 공식 표기로 자동 교정합니다.
+      (대소문자·띄어쓰기·점·하이픈은 무시하고 비교: "github pages" → "GitHub Pages", "nodejs" → "Node.js")
+   5) TAG_PRESETS에 있는 기술은 관리자 화면에 그룹별 선택 버튼으로도 나타납니다 (눌러서 켜고 끄기).
+      자주 쓰는 기술은 알맞은 그룹에 이름을 추가하세요. 새 그룹을 만들어도 됩니다.
+   6) 목록에 없는 기술은 입력칸에 직접 적으면 적은 그대로 들어갑니다.
+   정리는 입력칸을 벗어날 때, 그리고 GitHub에 저장할 때 자동으로 적용됩니다. */
+const TAG_PRESETS = [
+  { group:'플랫폼',            tags:['PC','Web','Android'] },
+  { group:'언어',              tags:['HTML','CSS','JavaScript','TypeScript','Python'] },
+  { group:'프레임워크·라이브러리', tags:['Node.js','Express','React','tkinter','Lucide'] },
+  { group:'데이터·서비스',      tags:['SQLite','localStorage','JSON','Supabase','Gemini API','Render'] },
+  { group:'도구·배포',          tags:['Git','GitHub','GitHub Pages','PyInstaller','Inno Setup','FFmpeg'] },
+];
+const TAG_CANONICAL = TAG_PRESETS.flatMap(g => g.tags);
+const TAG_ALIASES = { js:'JavaScript', ts:'TypeScript', node:'Node.js', expressjs:'Express', reactjs:'React' };
+const tagKey = str => str.toLowerCase().replace(/[\s._-]+/g, '');
+const TAG_CANON_MAP = new Map(TAG_CANONICAL.map(t => [tagKey(t), t]));
+
+function normalizeTags(list){
+  const seen = new Set();
+  const out = [];
+  (list || []).forEach(raw => {
+    const text = String(raw).replace(/\s+/g, ' ').trim();
+    if(!text) return;
+    const key = tagKey(text);
+    const name = TAG_CANON_MAP.get(key) || TAG_ALIASES[key] || text;
+    const dedupeKey = name.toLowerCase();
+    if(seen.has(dedupeKey)) return;
+    seen.add(dedupeKey);
+    out.push(name);
+  });
+  return out;
+}
+const parseTagInput = str => normalizeTags(str.split(/[,，]/));
+
 const PROJECTS_MARKER_START = '/* PROJECTS_DATA_' + 'START */';
 const PROJECTS_MARKER_END   = '/* PROJECTS_DATA_' + 'END */';
 
@@ -1203,7 +1253,10 @@ async function updateAdminGate(){
   body.hidden = !adminUnlocked;
 
   if(adminUnlocked){
-    if(!adminProjects) adminProjects = deepClone(PROJECTS);
+    if(!adminProjects){
+      adminProjects = deepClone(PROJECTS);
+      adminProjects.forEach(p => { p.tags = normalizeTags(p.tags); });
+    }
     await fillAdminConfigForm();
     renderAdminProjectList();
     setAdminLog('');
@@ -1285,6 +1338,18 @@ function emptyAdminProject(){
   return deepClone(PROJECT_DEFAULTS);
 }
 
+const hasTag = (p, tag) => (p.tags || []).some(t => t.toLowerCase() === tag.toLowerCase());
+
+function tagPresetsHtml(p){
+  return TAG_PRESETS.map(g => `<div class="tag-group"><span class="tag-group-label">${escapeHtml(g.group)}</span>${
+    g.tags.map(t => `<button type="button" class="tag-chip" data-tag="${escapeHtml(t)}" aria-pressed="${hasTag(p, t)}">${escapeHtml(t)}</button>`).join('')
+  }</div>`).join('');
+}
+
+function syncTagChips(item, p){
+  item.querySelectorAll('.tag-chip').forEach(btn => btn.setAttribute('aria-pressed', String(hasTag(p, btn.dataset.tag))));
+}
+
 function adminSummaryText(p){
   const links = (p.link ? 1 : 0) + (p.link2 ? 1 : 0);
   return `링크 ${links}개 · 태그 ${(p.tags || []).length}개 · 특징 ${(p.features || []).length}개`;
@@ -1301,6 +1366,9 @@ function renderAdminProjectList(){
     .map(key => `<option value="${escapeHtml(key)}" title="${escapeHtml(key)}">${escapeHtml(STATUS_CONFIG[key].label)}</option>`)
     .join('');
 
+  const nowD = new Date();
+  const nowYM = nowD.getFullYear() + '-' + String(nowD.getMonth() + 1).padStart(2, '0');
+
   root.innerHTML = adminProjects.map((p, idx) => {
     const open = adminExpanded.has(p);
     return `
@@ -1315,7 +1383,7 @@ function renderAdminProjectList(){
         <div><span class="admin-cell-label">상태</span><select data-field="status" aria-label="상태">${statusOptions}</select></div>
         <div><span class="admin-cell-label">버전</span><input type="text" data-field="model" aria-label="버전" placeholder="v1.0" value="${escapeHtml(p.model || '')}"></div>
         <div><span class="admin-cell-label">플랫폼</span><input type="text" data-field="platform" aria-label="플랫폼" value="${escapeHtml(p.platform || '')}"></div>
-        <div><span class="admin-cell-label">업데이트</span><input type="text" data-field="updatedAt" aria-label="최근 업데이트" placeholder="2026-08" value="${escapeHtml(p.updatedAt || '')}"></div>
+        <div><span class="admin-cell-label">업데이트</span><input type="text" data-field="updatedAt" aria-label="최근 업데이트" placeholder="${nowYM}" value="${escapeHtml(p.updatedAt || '')}"></div>
         <div class="admin-row-actions">
           <button type="button" class="admin-move-up" title="위로" ${idx === 0 ? 'disabled' : ''}>▲</button>
           <button type="button" class="admin-move-down" title="아래로" ${idx === adminProjects.length - 1 ? 'disabled' : ''}>▼</button>
@@ -1331,7 +1399,8 @@ function renderAdminProjectList(){
           <label class="admin-field"><span>링크2 URL (없으면 비워두기)</span><input type="text" data-field="link2" value="${escapeHtml(p.link2 || '')}" placeholder="https://..."></label>
           <label class="admin-field"><span>링크2 표시 이름</span><input type="text" data-field="link2Label" value="${escapeHtml(p.link2Label || '')}" placeholder="예: 웹사이트 (비우면 자동)"></label>
         </div>
-        <label class="admin-field"><span>기술 스택 (쉼표로 구분)</span><input type="text" data-field="tags" value="${escapeHtml((p.tags || []).join(', '))}"></label>
+        <label class="admin-field admin-field-tight"><span>기술 스택 (아래 버튼으로 고르거나, 목록에 없는 건 쉼표로 직접 입력 · 자동 정리)</span><input type="text" data-field="tags" value="${escapeHtml((p.tags || []).join(', '))}"></label>
+        <div class="tag-presets">${tagPresetsHtml(p)}</div>
         <label class="admin-field"><span>특징 (한 줄에 하나씩)</span><textarea data-field="features">${escapeHtml((p.features || []).join('\n'))}</textarea></label>
       </div>
     </div>`;
@@ -1361,13 +1430,26 @@ function bindAdminProjectListEvents(){
 
     const p = adminProjects[Number(item.dataset.idx)];
     if(field === 'tags'){
-      p.tags = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+      p.tags = parseTagInput(e.target.value);
+      syncTagChips(item, p);
     } else if(field === 'features'){
       p.features = e.target.value.split('\n').map(s => s.trim()).filter(Boolean);
     } else {
       p[field] = e.target.value;
     }
     if(field === 'status') item.style.setProperty('--dot', adminStatusColor(p.status));
+    const summary = item.querySelector('.admin-summary');
+    if(summary) summary.textContent = adminSummaryText(p);
+  });
+
+  root.addEventListener('change', e => {
+    if(e.target.dataset.field !== 'tags') return;
+    const item = e.target.closest('.admin-item');
+    if(!item) return;
+    const p = adminProjects[Number(item.dataset.idx)];
+    p.tags = parseTagInput(e.target.value);
+    e.target.value = p.tags.join(', ');
+    syncTagChips(item, p);
     const summary = item.querySelector('.admin-summary');
     if(summary) summary.textContent = adminSummaryText(p);
   });
@@ -1382,6 +1464,17 @@ function bindAdminProjectListEvents(){
       adminExpanded.delete(adminProjects[idx]);
       adminProjects.splice(idx, 1);
       renderAdminProjectList();
+    } else if(e.target.closest('.tag-chip')){
+      const tag = e.target.closest('.tag-chip').dataset.tag;
+      const p = adminProjects[idx];
+      p.tags = hasTag(p, tag)
+        ? (p.tags || []).filter(t => t.toLowerCase() !== tag.toLowerCase())
+        : normalizeTags([...(p.tags || []), tag]);
+      const input = item.querySelector('input[data-field="tags"]');
+      if(input) input.value = p.tags.join(', ');
+      syncTagChips(item, p);
+      const summary = item.querySelector('.admin-summary');
+      if(summary) summary.textContent = adminSummaryText(p);
     } else if(e.target.closest('.admin-move-up')){
       moveAdminProject(idx, -1);
     } else if(e.target.closest('.admin-move-down')){
@@ -1442,6 +1535,8 @@ async function publishProjectsToGitHub(){
     setAdminLog('GitHub 아이디, 저장소 이름, 토큰을 먼저 입력해주세요.', 'error');
     return;
   }
+
+  adminProjects.forEach(p => { p.tags = normalizeTags(p.tags); });
 
   const publishBtn = $('admin-publish');
   if(publishBtn) publishBtn.disabled = true;
