@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<!-- 포트폴리오 사이트 v1.4.0 — 관리자 기술 스택 프리셋(그룹별 선택 버튼, 눌러서 켜고 끄기) 추가. 이전: v1.3.0 기술 스택 표기 규칙 도입(공백 정리·중복 제거·공식 표기 교정) / v1.2.5 업데이트 입력칸 예시를 현재 연월로 표시 / v1.2.4 관리자 화면의 lucide.dev 주소를 클릭하면 이동 / v1.2.3 용량 경량화 / v1.2.2 로딩·렌더링 최적화 / v1.2.1 코드 정리 / v1.2.0 관리자 프로젝트 편집을 한 줄 목록 + 펼치기(상세) 방식으로 개선 / v1.1.0 상태 편집 기능 삭제 -->
+<!-- 포트폴리오 사이트 v1.8.0 — 방문자 화면에 태그 클릭 필터(카드 태그 클릭 시 그 기술 태그로 필터링)와 태그 클라우드(전체 태그 모아보기, 사용 빈도순) 추가. 이전: v1.7.0 관리자 업데이트 칸 자동 채우기·아이콘 자동완성 / v1.6.0 프로젝트 복제·저장 안 한 변경 경고 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
@@ -118,6 +118,7 @@ b,strong,h1,h2,h3{font-weight:700}
 .admin-row-actions button:disabled{opacity:.35;cursor:default;color:var(--muted)}
 .admin-row-actions button.admin-toggle-detail[aria-expanded="true"]{color:var(--accent)}
 .admin-row-actions button.admin-remove-project:hover{color:#DC2626}
+.admin-dirty-badge{display:block;font-size:13px;font-weight:700;color:#DC2626;margin:0 0 10px}
 .admin-detail{border-top:1px dashed var(--border);padding:16px 16px 4px}
 .admin-detail[hidden]{display:none}
 .admin-field-tight{margin-bottom:8px}
@@ -127,6 +128,13 @@ b,strong,h1,h2,h3{font-weight:700}
 .tag-chip{font-family:inherit;font-size:12.5px;font-weight:600;color:var(--ink);background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:4px 11px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:border-color .2s ease, color .2s ease, background-color .2s ease}
 .tag-chip:hover{border-color:var(--accent);color:var(--accent)}
 .tag-chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#FFFFFF}
+.icon-input-row{display:flex;align-items:center;gap:10px}
+.icon-input-row input{flex:1;min-width:0}
+.icon-preview{flex:none;width:38px;height:38px;border-radius:10px;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;box-sizing:border-box}
+.icon-preview[data-state="loading"]{opacity:.5}
+.icon-preview[data-state="missing"]{background:transparent;border:1px dashed #DC2626;color:#DC2626}
+.icon-preview-msg{font-size:11.5px;font-weight:500;line-height:1.5;color:var(--muted)}
+.icon-preview-msg.is-missing{color:#DC2626}
 @media (max-width: 860px){
   .admin-list-head{display:none}
   .admin-row{grid-template-columns:1fr 1fr}
@@ -174,7 +182,15 @@ h1{font-size:clamp(28px, 5vw, 44px);line-height:1.35;margin:0 0 16px;letter-spac
 .card h3{font-size:18px;margin:0 0 8px}
 .card p.desc{margin:0 0 16px;color:var(--muted);font-size:14px;line-height:1.65}
 .tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
-.tag{font-size:12px;padding:4px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-weight:600}
+.tag{font-size:12px;padding:4px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-weight:600;font-family:inherit;border:none;cursor:pointer;line-height:1.4}
+.tag:hover{background:var(--accent);color:#FFFFFF}
+.tag.active{background:var(--accent);color:#FFFFFF}
+.tag-cloud{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
+.tag-cloud:empty{display:none;margin-bottom:0}
+.tag-cloud .tag{background:var(--surface);border:1px solid var(--border);color:var(--muted)}
+.tag-cloud .tag:hover{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.tag-cloud .tag.active{background:var(--accent);color:#FFFFFF;border-color:var(--accent)}
+.tag-cloud .tag-count{font-size:11px;opacity:0.7;margin-left:2px}
 .feat{margin:0 0 20px;padding:0;list-style:none}
 .feat li{font-size:13.5px;color:var(--ink);padding-left:16px;position:relative;margin-bottom:8px;line-height:1.5}
 .feat li::before{content:"·";position:absolute;left:0;color:var(--accent);font-weight:700}
@@ -255,6 +271,7 @@ h1{font-size:clamp(28px, 5vw, 44px);line-height:1.35;margin:0 0 16px;letter-spac
     </select>
   </div>
   <div class="filter-bar" id="filter-bar" role="group" aria-label="상태별 필터"></div>
+  <div class="tag-cloud" id="tag-cloud" role="group" aria-label="기술 태그별 필터"></div>
   <div class="catalog" id="catalog" role="region" aria-label="프로젝트 목록"></div>
   <p class="catalog-empty" id="catalog-empty">검색 결과가 없습니다.</p>
 </main>
@@ -380,6 +397,7 @@ h1{font-size:clamp(28px, 5vw, 44px);line-height:1.35;margin:0 0 16px;letter-spac
         <span>#</span><span>제목</span><span>상태</span><span>버전</span><span>플랫폼</span><span>업데이트</span><span></span>
       </div>
       <div id="admin-project-list"></div>
+      <datalist id="admin-icon-options"></datalist>
       <button type="button" id="admin-add-project" class="admin-btn admin-btn-ghost">+ 새 프로젝트 추가</button>
     </section>
 
@@ -388,6 +406,7 @@ h1{font-size:clamp(28px, 5vw, 44px);line-height:1.35;margin:0 0 16px;letter-spac
         <span>커밋 메시지 (비워두면 기본 문구 사용)</span>
         <input type="text" id="gh-commit-message" placeholder="포트폴리오 프로젝트 업데이트 (관리자 도구)">
       </label>
+      <span id="admin-dirty-badge" class="admin-dirty-badge" hidden>● 저장하지 않은 변경사항이 있습니다</span>
       <button type="button" id="admin-publish" class="admin-btn admin-btn-primary">GitHub에 저장하고 배포</button>
       <p id="admin-log" class="admin-log" role="status" aria-live="polite"></p>
     </section>
@@ -808,6 +827,7 @@ async function enhanceRemoteIcons(root){
 let currentFilter = 'all';
 let currentSearch = '';
 let currentSort = 'manual';
+let currentTag = null;
 let catalogItems = [];
 
 const NO_LINK_LABELS = {
@@ -836,7 +856,7 @@ function linkAnchor(url, label, ariaLabel){
 /* ---------- 카드 렌더링 ---------- */
 function renderCard(p){
   const statusInfo = getStatusInfo(p.status);
-  const tags  = (p.tags     || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('');
+  const tags  = (p.tags     || []).map(t => `<button type="button" class="tag${t.toLowerCase() === currentTag ? ' active' : ''}" data-tag="${escapeHtml(t)}">${escapeHtml(t)}</button>`).join('');
   const feats = (p.features || []).map(f => `<li>${escapeHtml(f)}</li>`).join('');
 
   const icon = resolveIcon(p.icon, ICONS, ICONS.folder, '0 0 22 22');
@@ -897,6 +917,40 @@ function renderFilter(){
   filterBar.innerHTML = allBtn + statusBtns;
 }
 
+function tagCloudButtonHtml(name, count){
+  const key = name.toLowerCase();
+  const active = key === currentTag;
+  return `<button type="button" class="tag${active ? ' active' : ''}" data-tag="${escapeHtml(name)}">${escapeHtml(name)} <span class="tag-count">${count}</span></button>`;
+}
+
+function renderTagCloud(){
+  const cloud = $('tag-cloud');
+  if(!cloud) return;
+
+  const counts = new Map();
+  const display = new Map();
+  PROJECTS.forEach(p => (p.tags || []).forEach(t => {
+    const key = t.toLowerCase();
+    counts.set(key, (counts.get(key) || 0) + 1);
+    if(!display.has(key)) display.set(key, t);
+  }));
+
+  if(currentTag !== null && !counts.has(currentTag)) currentTag = null;
+
+  const names = [...counts.keys()].sort((a, b) => (counts.get(b) - counts.get(a)) || a.localeCompare(b));
+  cloud.innerHTML = names.map(key => tagCloudButtonHtml(display.get(key), counts.get(key))).join('');
+}
+
+function setTagFilter(tag){
+  const key = tag ? tag.toLowerCase() : null;
+  currentTag = (currentTag === key) ? null : key;
+  renderTagCloud();
+  document.querySelectorAll('#catalog .tag[data-tag]').forEach(btn => {
+    btn.classList.toggle('active', currentTag !== null && btn.dataset.tag.toLowerCase() === currentTag);
+  });
+  applyCatalogFilters();
+}
+
 function setFilter(filter){
   currentFilter = filter;
   document.querySelectorAll('#filter-bar .filter-btn').forEach(btn => {
@@ -915,6 +969,7 @@ function applyCatalogFilters(){
 
   for(const item of catalogItems){
     const visible = (currentFilter === 'all' || item.status === currentFilter)
+                 && (currentTag === null || item.tags.includes(currentTag))
                  && (!query || item.haystack.includes(query));
     if(item.el.hidden === visible) item.el.hidden = !visible;
     if(visible) visibleCount++;
@@ -989,7 +1044,7 @@ function renderCatalog(){
   root.innerHTML = sorted.map(renderCard).join('');
 
   const cardEls = root.children;
-  catalogItems = sorted.map((p, i) => ({ status: p.status, haystack: buildSearchText(p), el: cardEls[i] }));
+  catalogItems = sorted.map((p, i) => ({ status: p.status, tags: (p.tags || []).map(t => t.toLowerCase()), haystack: buildSearchText(p), el: cardEls[i] }));
 
   enhanceRemoteIcons(root);
   applyCatalogFilters();
@@ -997,6 +1052,7 @@ function renderCatalog(){
 
 function renderAll(){
   renderFilter();
+  renderTagCloud();
   renderHeroMeta();
   renderCatalog();
 }
@@ -1020,6 +1076,16 @@ function bindCatalogEvents(){
   on('filter-bar', 'click', e => {
     const btn = e.target.closest('.filter-btn');
     if(btn) setFilter(btn.dataset.filter);
+  });
+
+  on('tag-cloud', 'click', e => {
+    const btn = e.target.closest('.tag[data-tag]');
+    if(btn) setTagFilter(btn.dataset.tag);
+  });
+
+  on('catalog', 'click', e => {
+    const btn = e.target.closest('.tag[data-tag]');
+    if(btn) setTagFilter(btn.dataset.tag);
   });
 }
 
@@ -1270,9 +1336,11 @@ async function updateAdminGate(){
     if(!adminProjects){
       adminProjects = deepClone(PROJECTS);
       adminProjects.forEach(p => { p.tags = normalizeTags(p.tags); });
+      markAdminSnapshotSaved();
     }
     await fillAdminConfigForm();
     renderAdminProjectList();
+    updateAdminDirtyUI();
     setAdminLog('');
     return;
   }
@@ -1364,12 +1432,103 @@ function syncTagChips(item, p){
   item.querySelectorAll('.tag-chip').forEach(btn => btn.setAttribute('aria-pressed', String(hasTag(p, btn.dataset.tag))));
 }
 
+/* ---------- 아이콘 이름 자동완성 목록 ----------
+   내장 아이콘 + 이전에 lucide에서 찾아낸 적 있는 이름 + 지금 프로젝트들이 쓰고 있는 이름을 모아
+   <datalist>에 채웁니다. 입력칸에 list="admin-icon-options"로 연결돼 있어 타이핑하면 브라우저가 후보를 보여줍니다. */
+function refreshIconSuggestions(){
+  const list = $('admin-icon-options');
+  if(!list) return;
+  const names = new Set(Object.keys(ICONS));
+  remoteIconCache.forEach((inner, name) => { if(inner) names.add(name); });
+  (adminProjects || []).forEach(p => { if(p.icon) names.add(p.icon.trim()); });
+  list.innerHTML = [...names].sort().map(n => `<option value="${escapeHtml(n)}">`).join('');
+}
+
+/* ---------- 아이콘 미리보기 (아이콘 이름 입력칸 옆) ----------
+   카드에 실제로 표시되는 것과 같은 규칙: 내장 아이콘 → lucide 자동 로딩 → 못 찾으면 폴더 아이콘 */
+const ICON_PREVIEW_DELAY = 350;
+let iconPreviewSeq = 0;
+
+function drawIconPreview(box, markup, viewBox){
+  box.innerHTML = `<svg width="22" height="22" viewBox="${viewBox}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${markup}</svg>`;
+}
+
+async function updateIconPreview(item){
+  const box = item.querySelector('.icon-preview');
+  const msg = item.querySelector('.icon-preview-msg');
+  if(!box || !msg || !item.isConnected) return;
+
+  const name = (adminProjects[Number(item.dataset.idx)].icon || '').trim();
+  const token = String(++iconPreviewSeq);
+  box.dataset.token = token;
+  const show = (state, text) => { box.dataset.state = state; msg.textContent = text; msg.classList.toggle('is-missing', state === 'missing'); };
+  const showMissing = () => {
+    drawIconPreview(box, ICONS.folder, '0 0 22 22');
+    show('missing', '아이콘을 찾지 못했어요. 이름은 소문자와 하이픈으로 적어야 해요 (예: gamepad-2). 인터넷 연결 문제일 수도 있어요. 지금은 사이트에 폴더 아이콘으로 표시됩니다.');
+  };
+
+  if(!name){
+    drawIconPreview(box, ICONS.folder, '0 0 22 22');
+    show('empty', '비워두면 폴더 아이콘으로 표시됩니다.');
+  } else if(Object.prototype.hasOwnProperty.call(ICONS, name)){
+    drawIconPreview(box, ICONS[name], '0 0 22 22');
+    show('ok', '내장 아이콘');
+  } else if(remoteIconCache.get(name)){
+    drawIconPreview(box, remoteIconCache.get(name), '0 0 24 24');
+    show('ok', 'lucide 아이콘');
+  } else if(remoteIconCache.has(name)){
+    showMissing();
+  } else {
+    drawIconPreview(box, ICONS.folder, '0 0 22 22');
+    show('loading', 'lucide에서 찾는 중...');
+    const inner = await fetchLucideIcon(name);
+    if(box.dataset.token !== token) return;
+    if(inner){
+      drawIconPreview(box, inner, '0 0 24 24');
+      show('ok', 'lucide 아이콘');
+      refreshIconSuggestions();
+    } else {
+      showMissing();
+    }
+  }
+}
+
+const iconPreviewTimers = new WeakMap();
+function scheduleIconPreview(item){
+  clearTimeout(iconPreviewTimers.get(item));
+  iconPreviewTimers.set(item, setTimeout(() => updateIconPreview(item), ICON_PREVIEW_DELAY));
+}
+
 function adminSummaryText(p){
   const links = (p.link ? 1 : 0) + (p.link2 ? 1 : 0);
   return `링크 ${links}개 · 태그 ${(p.tags || []).length}개 · 특징 ${(p.features || []).length}개`;
 }
 
 const adminStatusColor = key => getStatusInfo(key).color || '#71717A';
+
+/* ---------- 저장하지 않은 변경 추적 ----------
+   adminSavedSnapshot: 마지막으로 GitHub에 저장(또는 처음 불러온) 시점의 상태.
+   지금 상태와 다르면 "저장 안 함"으로 보고, 탭을 닫거나 새로고침할 때 브라우저가 한 번 더 물어봅니다. */
+let adminSavedSnapshot = null;
+
+function markAdminSnapshotSaved(){
+  adminSavedSnapshot = JSON.stringify(adminProjects);
+}
+
+function isAdminDirty(){
+  return adminSavedSnapshot !== null && JSON.stringify(adminProjects) !== adminSavedSnapshot;
+}
+
+function updateAdminDirtyUI(){
+  const badge = $('admin-dirty-badge');
+  if(badge) badge.hidden = !isAdminDirty();
+}
+
+window.addEventListener('beforeunload', e => {
+  if(!isAdminDirty()) return;
+  e.preventDefault();
+  e.returnValue = '';
+});
 
 function renderAdminProjectList(){
   const root = $('admin-project-list');
@@ -1402,6 +1561,7 @@ function renderAdminProjectList(){
           <button type="button" class="admin-move-up" title="위로" ${idx === 0 ? 'disabled' : ''}>▲</button>
           <button type="button" class="admin-move-down" title="아래로" ${idx === adminProjects.length - 1 ? 'disabled' : ''}>▼</button>
           <button type="button" class="admin-toggle-detail" aria-expanded="${open}">${open ? '접기 ▴' : '상세 ▾'}</button>
+          <button type="button" class="admin-duplicate-project" title="복제">복제</button>
           <button type="button" class="admin-remove-project">삭제</button>
         </div>
       </div>
@@ -1409,7 +1569,7 @@ function renderAdminProjectList(){
         <label class="admin-field"><span>설명</span><textarea data-field="desc">${escapeHtml(p.desc || '')}</textarea></label>
         <div class="admin-grid">
           <label class="admin-field"><span>링크1 (없으면 비워두기)</span><input type="text" data-field="link" value="${escapeHtml(p.link || '')}" placeholder="https://..."></label>
-          <label class="admin-field"><span>아이콘 이름</span><input type="text" data-field="icon" value="${escapeHtml(p.icon || '')}" placeholder="folder, rocket 등"></label>
+          <label class="admin-field"><span>아이콘 이름</span><span class="icon-input-row"><span class="icon-preview" data-state="loading" aria-hidden="true"></span><input type="text" data-field="icon" list="admin-icon-options" value="${escapeHtml(p.icon || '')}" placeholder="folder, rocket 등" spellcheck="false" autocapitalize="off"></span><span class="icon-preview-msg" aria-live="polite"></span></label>
           <label class="admin-field"><span>링크2 URL (없으면 비워두기)</span><input type="text" data-field="link2" value="${escapeHtml(p.link2 || '')}" placeholder="https://..."></label>
           <label class="admin-field"><span>링크2 표시 이름</span><input type="text" data-field="link2Label" value="${escapeHtml(p.link2Label || '')}" placeholder="예: 웹사이트 (비우면 자동)"></label>
         </div>
@@ -1420,9 +1580,12 @@ function renderAdminProjectList(){
     </div>`;
   }).join('');
 
+  refreshIconSuggestions();
+
   root.querySelectorAll('.admin-item').forEach(item => {
     const sel = item.querySelector('select[data-field="status"]');
     if(sel) sel.value = adminProjects[Number(item.dataset.idx)].status || 'wip';
+    updateIconPreview(item);
   });
 }
 
@@ -1452,8 +1615,10 @@ function bindAdminProjectListEvents(){
       p[field] = e.target.value;
     }
     if(field === 'status') item.style.setProperty('--dot', adminStatusColor(p.status));
+    if(field === 'icon') scheduleIconPreview(item);
     const summary = item.querySelector('.admin-summary');
     if(summary) summary.textContent = adminSummaryText(p);
+    updateAdminDirtyUI();
   });
 
   root.addEventListener('change', e => {
@@ -1466,6 +1631,7 @@ function bindAdminProjectListEvents(){
     syncTagChips(item, p);
     const summary = item.querySelector('.admin-summary');
     if(summary) summary.textContent = adminSummaryText(p);
+    updateAdminDirtyUI();
   });
 
   root.addEventListener('click', e => {
@@ -1478,6 +1644,21 @@ function bindAdminProjectListEvents(){
       adminExpanded.delete(adminProjects[idx]);
       adminProjects.splice(idx, 1);
       renderAdminProjectList();
+      updateAdminDirtyUI();
+    } else if(e.target.closest('.admin-duplicate-project')){
+      const copy = deepClone(adminProjects[idx]);
+      copy.title = copy.title ? `${copy.title} (복사본)` : '';
+      adminProjects.splice(idx + 1, 0, copy);
+      adminExpanded.add(copy);
+      renderAdminProjectList();
+      updateAdminDirtyUI();
+      const items = document.querySelectorAll('#admin-project-list .admin-item');
+      const newItem = items[idx + 1];
+      if(newItem){
+        newItem.scrollIntoView({ behavior:'smooth', block:'center' });
+        const titleInput = newItem.querySelector('input[data-field="title"]');
+        if(titleInput){ titleInput.focus({ preventScroll:true }); titleInput.select(); }
+      }
     } else if(e.target.closest('.tag-chip')){
       const tag = e.target.closest('.tag-chip').dataset.tag;
       const p = adminProjects[idx];
@@ -1489,10 +1670,13 @@ function bindAdminProjectListEvents(){
       syncTagChips(item, p);
       const summary = item.querySelector('.admin-summary');
       if(summary) summary.textContent = adminSummaryText(p);
+      updateAdminDirtyUI();
     } else if(e.target.closest('.admin-move-up')){
       moveAdminProject(idx, -1);
+      updateAdminDirtyUI();
     } else if(e.target.closest('.admin-move-down')){
       moveAdminProject(idx, +1);
+      updateAdminDirtyUI();
     } else if(e.target.closest('.admin-toggle-detail')){
       const btn = e.target.closest('.admin-toggle-detail');
       const detail = item.querySelector('.admin-detail');
@@ -1507,9 +1691,12 @@ function bindAdminProjectListEvents(){
 
 function addAdminProject(){
   const newProject = emptyAdminProject();
+  const now = new Date();
+  newProject.updatedAt = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
   adminProjects.push(newProject);
   adminExpanded.add(newProject);
   renderAdminProjectList();
+  updateAdminDirtyUI();
 
   const items = document.querySelectorAll('#admin-project-list .admin-item');
   const last = items[items.length - 1];
@@ -1526,6 +1713,7 @@ function applyAdminSort(){
 
   adminProjects = sortProjectsList(adminProjects, sortKey, buildStatusOrderMap());
   renderAdminProjectList();
+  updateAdminDirtyUI();
   setAdminLog('정렬을 적용했습니다. 아래에서 확인하고, 맘에 들면 저장(배포)해주세요.', 'success');
 }
 
@@ -1598,6 +1786,8 @@ async function publishProjectsToGitHub(){
     PROJECTS.length = 0;
     PROJECTS.push(...deepClone(adminProjects));
     renderAll();
+    markAdminSnapshotSaved();
+    updateAdminDirtyUI();
 
     setAdminLog('저장 완료! 몇십 초 후 실제 배포된 사이트에도 반영됩니다.', 'success');
   } catch(err){
