@@ -1521,7 +1521,7 @@ const ADMIN_PASS_HASH = 'b4f9ffa70ae677cdc2be4ee64e612a239221bc99f3be6ddb45bce0b
    솔트 + PBKDF2(60만 회)로 훨씬 느리고 어려운 방식으로 검증하며,
    이 값이 null이 아니면 위의 ADMIN_PASS_HASH는 쓰이지 않습니다.
    형식: { s: "솔트(base64)", i: 반복횟수, h: "해시(hex)" } */
-const ADMIN_PASS_VERIFIER = null;
+const ADMIN_PASS_VERIFIER = { s: "FhSgvTsm4rqO/BbLVVS4jg==", i: 600000, h: "5cc64c63ad81130e9a599fd98fa616788209ec7ce746829139cdc01bfbeb3728" };
 
 const ADMIN_CONFIG_KEY   = 'admin-github-config';
 const LOGIN_ATTEMPTS_KEY = 'admin-login-attempts';
