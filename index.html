@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<!-- 포트폴리오 사이트 v1.14.4 — 저장 시 GitHub 파일 재확인 + 잠금 기능이 없는 예전 index.html이면 저장 중단, 로컬 화면 안내. 이전: v1.14.3 문의 안내 창 / v1.14.2 잠긴 카드 검은 막+자물쇠 / v1.14.1 비밀번호 검증 강화 / v1.14.0 프로젝트 잠금 / v1.13.0 푸터 버전/변경 내역·문의 링크 / v1.12.0 프로필 사진 변경 / v1.11.0 문의 버튼 / v1.10.1 카드 글자 자동 줄바꿈 -->
+<!-- 포트폴리오 사이트 v1.15.0 — 새로 추가되거나 버전이 바뀐 프로젝트에 7일간 NEW 표시, 관리자 로그인 안내 강화. 이전: v1.14.4 저장 재확인 / v1.14.3 문의 안내 창 / v1.14.2 잠긴 카드 검은 막+자물쇠 / v1.14.1 비밀번호 검증 강화 / v1.14.0 프로젝트 잠금 / v1.13.0 푸터 버전/변경 내역·문의 링크 / v1.12.0 프로필 사진 변경 / v1.11.0 문의 버튼 / v1.10.1 카드 글자 자동 줄바꿈 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
@@ -223,6 +223,8 @@ h1{font-size:clamp(28px, 5vw, 44px);line-height:1.35;margin:0 0 16px;letter-spac
 .status{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--dot, var(--muted));font-weight:600}
 .status::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--dot, var(--muted));display:inline-block}
 .model{color:var(--muted);font-size:12.5px}
+.card-top-left{display:inline-flex;align-items:center;gap:8px}
+.new-badge{font-size:10.5px;font-weight:800;letter-spacing:.05em;line-height:1.5;padding:1px 7px;border-radius:999px;background:#EF4444;color:#FFFFFF}
 .icon-wrap{width:40px;height:40px;border-radius:10px;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;margin-bottom:14px;color:var(--accent)}
 .card h3{font-size:18px;margin:0 0 8px}
 .card p.desc{margin:0 0 16px;color:var(--muted);font-size:14px;line-height:1.65;overflow-wrap:break-word;word-break:break-word}
@@ -362,6 +364,7 @@ h1{font-size:clamp(28px, 5vw, 44px);line-height:1.35;margin:0 0 16px;letter-spac
 
     <div id="admin-gate-unlock">
       <label class="admin-field"><span>비밀번호</span><input type="password" id="admin-unlock-pass" autocomplete="off"></label>
+      <p id="admin-gate-method" class="admin-hint admin-hint-tight"></p>
       <div class="admin-actions">
         <button type="button" id="admin-unlock-btn" class="admin-btn admin-btn-primary">확인</button>
       </div>
@@ -563,6 +566,9 @@ const STATUS_CONFIG = {
                 (예: link2Label: "웹사이트")
    tags:        기술 스택 배열, 원하는 만큼 추가 가능 (표기 규칙·선택 버튼 목록은 아래 TAG_PRESETS 주석 참고)
    features:    특징 목록 배열, 원하는 만큼 추가 가능
+   newAt:       NEW 표시 기준일("YYYY-MM-DD"). 관리자 화면에서 저장할 때 새로 추가했거나
+                버전(model)을 바꾼 프로젝트에 오늘 날짜가 자동으로 들어가며, 그 날부터 7일간 NEW가 뜹니다.
+                직접 쓰지 않아도 됩니다. (비워 두면 NEW 없음)
    locked / hideTitle / lockedEnc : 프로젝트 잠금용 값입니다. 직접 쓰지 말고
                 관리자 화면의 [상세 → 이 프로젝트 잠그기]로 켜세요. 잠긴 프로젝트는
                 제목(또는 "비공개 프로젝트")과 잠금 표시만 공개되고, 나머지 정보는
@@ -776,8 +782,9 @@ const CONTACT_NOTICE = [
    화면 맨 아래(푸터)의 버전 표시를 누르면 최근 변경 내역이 펼쳐집니다.
    사이트를 고칠 때마다 SITE_VERSION을 올리고, SITE_CHANGELOG 맨 위에 한 줄 추가하세요.
    (화면에는 최근 6개까지만 보입니다) */
-const SITE_VERSION = "1.14.4";
+const SITE_VERSION = "1.15.0";
 const SITE_CHANGELOG = [
+  { v: "1.15.0", note: "새로 추가되거나 버전이 바뀐 프로젝트에 7일간 NEW 표시, 관리자 로그인 화면 안내 강화" },
   { v: "1.14.4", note: "저장 후 GitHub 파일을 다시 읽어 확인하고, 로컬 화면·예전 코드 때문에 잠금이 안 보이는 경우를 안내" },
   { v: "1.14.3", note: "문의 버튼을 누르면 이용 안내 확인 창을 먼저 표시 (장난 문의 방지)" },
   { v: "1.14.2", note: "잠긴 프로젝트 카드를 반투명한 검은 막과 가운데 자물쇠 모양으로 표시" },
@@ -1034,6 +1041,18 @@ function linkAnchor(url, label, ariaLabel){
   return `<a href="${safeUrl(url)}" target="_blank" rel="noopener noreferrer" aria-label="${escapeHtml(ariaLabel)}">${escapeHtml(label)}</a>`;
 }
 
+/* ---------- NEW 표시 (기준일부터 7일간) ---------- */
+const NEW_DAYS = 7;
+function isNewProject(p){
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec((p && p.newAt) || '');
+  if(!m) return false;
+  const start = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const days = Math.round((today - start) / 86400000);
+  return days >= 0 && days < NEW_DAYS;
+}
+
 /* ---------- 카드 렌더링 ---------- */
 function renderCard(p){
   if(!isLocked(p)) return renderCardBody(p);
@@ -1086,7 +1105,7 @@ function renderCardBody(p, relockKey){
   return `
     <article class="card">
       <div class="card-top">
-        <span class="status" style="--dot:${statusInfo.color}">${escapeHtml(statusInfo.label)}</span>
+        <span class="card-top-left"><span class="status" style="--dot:${statusInfo.color}">${escapeHtml(statusInfo.label)}</span>${isNewProject(p) ? '<span class="new-badge">NEW</span>' : ''}</span>
         <span class="model">${escapeHtml(p.model || '')}</span>
       </div>
       <div class="icon-wrap">
@@ -1534,7 +1553,7 @@ const GH_DEFAULTS  = { branch:'main', path:'index.html' };
 
 const PROJECT_DEFAULTS = {
   status:'wip', model:'', icon:'folder', title:'', desc:'', tags:[], features:[],
-  platform:'', link:'', link2:'', link2Label:'', updatedAt:'',
+  platform:'', link:'', link2:'', link2Label:'', updatedAt:'', newAt:'',
 };
 
 /* ---------- 기술 태그(기술 스택) 규칙 ----------
@@ -1626,6 +1645,7 @@ function setAdminGateError(msg){
 async function verifyAdminPassword(pass){
   const v = ADMIN_PASS_VERIFIER;
   if(!v) return (await sha256Hex(pass)) === ADMIN_PASS_HASH;
+  if(!v.s || !v.i || !v.h) throw new Error('ADMIN_PASS_VERIFIER 형식이 올바르지 않습니다.');
   const baseKey = await crypto.subtle.importKey('raw', new TextEncoder().encode(pass), 'PBKDF2', false, ['deriveBits']);
   const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: base64ToBytes(v.s), iterations: v.i, hash: 'SHA-256' }, baseKey, 256);
   const hex = [...new Uint8Array(bits)].map(b => b.toString(16).padStart(2, '0')).join('');
@@ -1664,7 +1684,16 @@ async function tryUnlockAdmin(){
 
   const input = $('admin-unlock-pass');
   const pass = input.value;
-  if(await verifyAdminPassword(pass)){
+  let ok;
+  try{
+    ok = await verifyAdminPassword(pass);
+  } catch(err){
+    setAdminGateError(!(window.crypto && crypto.subtle)
+      ? '이 주소에서는 비밀번호 확인 기능을 쓸 수 없습니다. https 주소나 localhost에서 열어 주세요.'
+      : '비밀번호를 확인하는 중 오류가 났습니다. index.html의 ADMIN_PASS_VERIFIER 값이 잘못 붙여넣어지지 않았는지 확인하세요.');
+    return;
+  }
+  if(ok){
     clearLoginAttempts();
     adminUnlocked = true;
     adminSessionPassword = pass;
@@ -1678,6 +1707,18 @@ async function tryUnlockAdmin(){
   setAdminGateError(nowLockedMs > 0
     ? lockoutMessage(nowLockedMs)
     : `비밀번호가 올바르지 않습니다. (남은 시도 ${MAX_LOGIN_ATTEMPTS - (getLoginAttempts().count || 0)}회)`);
+}
+
+/* 로그인 화면 안내: 어떤 검증 방식이 적용 중인지, 잠금(5분) 상태인지 보여줍니다. */
+function renderAdminGateHint(){
+  const el = $('admin-gate-method');
+  if(el){
+    el.textContent = ADMIN_PASS_VERIFIER
+      ? '검증 방식: 새 방식(솔트+PBKDF2)이 적용되어 있습니다.'
+      : '검증 방식: 예전 방식(SHA-256)입니다. 새 비밀번호를 만들었다면 ADMIN_PASS_VERIFIER가 아직 이 파일에 적용되지 않은 상태입니다.';
+  }
+  const ms = remainingLockoutMs();
+  if(ms > 0 && !adminUnlocked) setAdminGateError(lockoutMessage(ms));
 }
 
 function lockAdmin(){
@@ -1695,12 +1736,14 @@ async function updateAdminGate(){
 
   gate.hidden = adminUnlocked;
   body.hidden = !adminUnlocked;
+  renderAdminGateHint();
 
   if(adminUnlocked){
     if(!adminProjects){
       adminProjects = deepClone(PROJECTS);
       await decryptAdminLockedProjects(adminProjects, adminSessionPassword);
       adminProjects.forEach(p => { p.tags = normalizeTags(p.tags); });
+      recordAdminBases();
       markAdminSnapshotSaved();
     }
     await fillAdminConfigForm();
@@ -1710,6 +1753,8 @@ async function updateAdminGate(){
     return;
   }
   setAdminGateError('');
+  const lockMs = remainingLockoutMs();
+  if(lockMs > 0) setAdminGateError(lockoutMessage(lockMs));
 }
 
 async function deriveKeyFromPassword(password, saltBytes){
@@ -1929,6 +1974,33 @@ const adminStatusColor = key => getStatusInfo(key).color || '#71717A';
    지금 상태와 다르면 "저장 안 함"으로 보고, 탭을 닫거나 새로고침할 때 브라우저가 한 번 더 물어봅니다. */
 let adminSavedSnapshot = null;
 
+/* ---------- NEW 표시 기준일 자동 기록 ----------
+   adminBaseModel: 불러왔거나 마지막으로 저장한 시점의 버전(model). 저장할 때
+   새로 추가된 프로젝트이거나 버전이 달라졌으면 newAt에 오늘 날짜를 넣습니다. */
+const adminBaseModel = new WeakMap();
+function recordAdminBases(){
+  (adminProjects || []).forEach(p => adminBaseModel.set(p, p.model || ''));
+}
+function todayString(){
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function stampNewProjects(){
+  const undo = [];
+  const today = todayString();
+  adminProjects.forEach(p => {
+    if(p.lockedFailed) return;
+    if(!adminBaseModel.has(p) || (p.model || '') !== adminBaseModel.get(p)){
+      undo.push([p, p.newAt || '']);
+      p.newAt = today;
+    }
+  });
+  return undo;
+}
+function undoStamps(undo){
+  undo.forEach(([p, prev]) => { p.newAt = prev; });
+}
+
 function markAdminSnapshotSaved(){
   adminSavedSnapshot = JSON.stringify(adminProjects);
 }
@@ -1989,6 +2061,9 @@ function renderAdminProjectList(){
           <label class="admin-check"><input type="checkbox" data-field="hideTitle" ${p.hideTitle ? 'checked' : ''} ${p.lockedFailed ? 'disabled' : ''}> 제목도 숨기기 (공개 화면에는 "비공개 프로젝트"로 표시)</label>
           <p class="admin-hint admin-hint-tight">잠그면 저장할 때 이 프로젝트의 정보(설명·링크·태그·특징 등)가 관리자 비밀번호로 암호화되어, 공개 사이트에서는 볼 수 없습니다. 방문자에게는 상태가 "비공개"로만 보이고, 비밀번호를 아는 사람은 카드의 [잠금 해제]로 열어볼 수 있습니다.</p>
         </div>
+        <p class="admin-hint admin-hint-tight">${p.newAt
+          ? `NEW 기준일 ${escapeHtml(p.newAt)} — ${isNewProject(p) ? '지금 NEW가 표시 중입니다 (기준일부터 7일간).' : '표시 기간이 지났습니다.'}`
+          : '새로 추가하거나 버전을 바꿔서 저장하면 그날부터 7일간 NEW가 표시됩니다.'}</p>
         <label class="admin-field"><span>설명</span><textarea data-field="desc">${escapeHtml(p.desc || '')}</textarea></label>
         <div class="admin-grid">
           <label class="admin-field"><span>링크1 (없으면 비워두기)</span><input type="text" data-field="link" value="${escapeHtml(p.link || '')}" placeholder="https://..."></label>
@@ -2169,12 +2244,15 @@ async function publishProjectsToGitHub(){
 
   const publishBtn = $('admin-publish');
   if(publishBtn) publishBtn.disabled = true;
+  const stampUndo = stampNewProjects();
+  let committed = false;
 
   let publicList;
   try{
     if(adminProjects.some(p => p.locked)) setAdminLog('잠금 프로젝트를 암호화하는 중...');
     publicList = await buildPublicProjects(adminProjects, adminSessionPassword);
   } catch(err){
+    undoStamps(stampUndo);
     setAdminLog('잠금 프로젝트를 암호화하지 못했습니다: ' + (err.message || err), 'error');
     if(publishBtn) publishBtn.disabled = false;
     return;
@@ -2223,10 +2301,13 @@ async function publishProjectsToGitHub(){
       throw new Error(`GitHub 저장에 실패했습니다 (${putRes.status}): ${err.message || '알 수 없는 오류'}`);
     }
 
+    committed = true;
     PROJECTS.length = 0;
     PROJECTS.push(...deepClone(publicList));
     lockedRevealed.clear();
     renderAll();
+    recordAdminBases();
+    renderAdminProjectList();
     markAdminSnapshotSaved();
     updateAdminDirtyUI();
 
@@ -2244,6 +2325,7 @@ async function publishProjectsToGitHub(){
     if(isLocalView) msg += ' ※ 지금 보고 있는 화면은 내 컴퓨터의 파일이라 새로고침하면 예전 내용으로 돌아옵니다. deploy.bat을 실행해 GitHub 내용을 이 폴더로 가져오거나, 배포된 사이트 주소에서 확인하세요.';
     setAdminLog(msg, 'success');
   } catch(err){
+    if(!committed) undoStamps(stampUndo);
     setAdminLog(err.message || '알 수 없는 오류가 발생했습니다.', 'error');
   } finally{
     if(publishBtn) publishBtn.disabled = false;
@@ -2502,6 +2584,7 @@ function init(){
   renderCreatorLinks();
   setupContactLink();
   bindContactDialog();
+  renderAdminGateHint();
   initProfileImage();
   renderSiteVersion();
   bindCatalogEvents();
