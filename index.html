@@ -189,10 +189,12 @@ h1{font-size:clamp(28px, 5vw, 44px);line-height:1.35;margin:0 0 16px;letter-spac
 .skel-short{width:60%}
 .skel-tags{display:flex;gap:8px;margin-top:8px}
 .skel-tags span{width:46px;height:20px;border-radius:999px;background:var(--border)}
-.lock-overlay{position:absolute;inset:0;width:100%;border:0;border-radius:inherit;padding:0;background:rgba(0,0,0,.62);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background-color .2s ease}
+.lock-overlay{position:absolute;inset:0;width:100%;border:0;border-radius:inherit;padding:24px 16px;background:rgba(0,0,0,.62);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background-color .2s ease}
 .lock-overlay:hover{background:rgba(0,0,0,.5)}
 .lock-overlay:focus-visible{outline:2px solid var(--accent);outline-offset:-4px}
-.lock-overlay svg{width:52px;height:52px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.4))}
+.lock-overlay svg{width:52px;height:52px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.4));flex-shrink:0}
+.lock-overlay-label{font-size:15px;font-weight:600;color:#fff;letter-spacing:-0.01em;text-shadow:0 1px 3px rgba(0,0,0,.4);text-align:center;line-height:1.4}
+.card-locked-hidden{min-height:280px}
 .lock-btn{background:var(--surface);color:var(--ink);border:1px solid var(--border);border-radius:999px;padding:5px 12px;font-size:12.5px;font-weight:700;font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:border-color .2s ease,color .2s ease}
 .lock-btn:hover{border-color:var(--accent);color:var(--accent)}
 .lock-actions{margin-top:12px;text-align:right}
@@ -1114,6 +1116,16 @@ function renderCard(p){
 }
 
 function renderLockedCard(p){
+  if(p.hideTitle){
+    return `
+    <article class="card card-locked card-locked-hidden">
+      <button type="button" class="lock-overlay" data-unlock="1" aria-label="비공개 프로젝트입니다 — 잠긴 프로젝트, 눌러서 잠금 해제">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="4" y="10.5" width="16" height="10.5" rx="2.2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.7" r="1.2" fill="currentColor" stroke="none"/></svg>
+        <span class="lock-overlay-label">비공개 프로젝트입니다</span>
+      </button>
+    </article>
+  `;
+  }
   const statusInfo = getStatusInfo(p.status);
   return `
     <article class="card card-locked">
@@ -2177,7 +2189,7 @@ function renderAdminProjectList(){
       <div class="admin-detail" ${open ? '' : 'hidden'}>
         <div class="admin-lock-box">
           <label class="admin-check"><input type="checkbox" data-field="locked" ${p.locked ? 'checked' : ''} ${p.lockedFailed ? 'disabled' : ''}> 🔒 이 프로젝트 잠그기</label>
-          <label class="admin-check"><input type="checkbox" data-field="hideTitle" ${p.hideTitle ? 'checked' : ''} ${p.lockedFailed ? 'disabled' : ''}> 제목도 숨기기 (공개 화면에는 "비공개 프로젝트"로 표시)</label>
+          <label class="admin-check"><input type="checkbox" data-field="hideTitle" ${p.hideTitle ? 'checked' : ''} ${p.lockedFailed ? 'disabled' : ''}> 제목도 숨기기 (공개 화면에는 "비공개 프로젝트입니다"로 표시)</label>
           <p class="admin-hint admin-hint-tight">잠그면 저장할 때 이 프로젝트의 정보(설명·링크·태그·특징 등)가 관리자 비밀번호로 암호화되어, 공개 사이트에서는 볼 수 없습니다. 방문자에게는 상태가 "비공개"로만 보이고, 비밀번호를 아는 사람은 카드의 [잠금 해제]로 열어볼 수 있습니다.</p>
         </div>
         <p class="admin-hint admin-hint-tight">${p.newAt
